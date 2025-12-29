@@ -228,6 +228,25 @@
 
     .example-btn:hover { border-color: var(--red); color: var(--white); }
 
+    .random-btn {
+      display: block;
+      width: 100%;
+      background: linear-gradient(135deg, var(--red), #ff6b6b);
+      border: none;
+      color: white;
+      padding: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      margin-bottom: 12px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .random-btn:hover { transform: scale(1.02); box-shadow: 0 4px 15px rgba(230,57,70,0.4); }
+
     /* Library tab */
     .library-empty {
       text-align: center;
@@ -520,6 +539,7 @@
 
         <div class="examples">
           <h3>Quick Examples</h3>
+          <button class="random-btn" id="randomBtn">Surprise Me</button>
           <button class="example-btn" data-prompt="A kinetic typography hero with the word 'MOTION' where each letter floats independently and responds to mouse movement. Swiss grid background with animated red accent lines.">Kinetic Typography</button>
           <button class="example-btn" data-prompt="An abstract data visualization showing orbiting circles of different sizes, pulsing and changing opacity. Minimalist black and white with red highlights.">Data Visualization</button>
           <button class="example-btn" data-prompt="A scrolling gallery of Matisse-style organic shapes that morph and dance. Cream background with bold black shapes.">Matisse Shapes</button>
@@ -587,6 +607,40 @@
   </div>
 
   <script>
+    // Random prompts for "Surprise Me"
+    const randomPrompts = [
+      "A cosmic clock with orbiting planets as hour markers, each planet pulsing with light. The center has a spinning black hole effect. Numbers float and rotate in 3D space.",
+      "A forest of abstract trees made from vertical lines that wave like grass in wind. Birds made of simple triangles fly between them. Parallax scrolling depth effect.",
+      "An infinite tunnel of rotating hexagons that zoom toward the viewer. Each hexagon has a different shade creating a hypnotic gradient spiral.",
+      "A retro arcade game title screen with pixelated letters that glitch and reform. Scanlines overlay the whole page. Neon colors pulse rhythmically.",
+      "A flock of geometric birds (triangles) that follow the mouse cursor in a murmuration pattern. They leave trailing shadows as they move.",
+      "A giant eye that blinks slowly, with the iris made of concentric rotating rings. The pupil follows the mouse. Eyelashes animate on blink.",
+      "A cityscape silhouette with windows that light up randomly like a living organism. Clouds drift slowly across. Rain particles fall when you click.",
+      "An abstract sound visualizer with bars that pulse even without sound. The bars form a circular pattern like a speaker. Colors shift through the spectrum.",
+      "A pendulum wave simulation with 15 swinging circles that create mesmerizing patterns as they go in and out of phase. Clean black and white aesthetic.",
+      "A morphing blob that continuously transforms between different organic Matisse-inspired shapes. Soft shadows follow the form. Cream and terracotta palette.",
+      "A 3D rotating cube made of smaller cubes, each face showing different animated patterns. Hover over faces to zoom into that pattern.",
+      "A typewriter effect that types out a poem, but each letter is a tiny animated element - some spin, some pulse, some bounce into place.",
+      "An ocean wave made of layered sine waves with particles floating on top like foam. Sunset gradient background. Seagull silhouettes drift by.",
+      "A constellation map where stars connect when you hover near them. The night sky slowly rotates. Shooting stars appear randomly.",
+      "A Newton's cradle with colorful spheres that never stops. The motion creates subtle screen shake. Sound wave visualization behind it.",
+      "A kaleidoscope effect that uses geometric shapes instead of images. The pattern continuously evolves. Click to change the seed pattern.",
+      "A DNA helix that rotates in 3D space, with base pairs highlighted in different colors. Zoom in/out on scroll. Labels fade in on hover.",
+      "A vintage television with static that occasionally shows brief animated scenes. Channel knob that you can click to change patterns.",
+      "An hourglass with sand particles that actually flow and pile up. When empty, it flips with a smooth 3D rotation. Time display counts down.",
+      "A music staff with notes that animate and play as they scroll by. The notes bounce and leave color trails. Tempo changes on click.",
+      "A fractal tree that grows from a seed, branches splitting recursively. Leaves appear and fall with seasons. Wind affects the branches.",
+      "A lava lamp with realistic blob physics. Blobs rise, merge, split, and sink. Ambient color shifting. Heat increases on mouse proximity.",
+      "A radar sweep animation with blips appearing at random positions. Concentric circles pulse outward. Military green aesthetic with scan lines.",
+      "A bouncing DVD logo that changes color on corner hits. Track the score. Celebration animation when it hits perfectly in the corner.",
+      "A particle system explosion that resets every few seconds. Particles have gravity, trails, and fade out. Click to trigger new explosions.",
+      "A 3D card flip gallery where cards float and spin in space. Hover to focus and enlarge. Each card has a unique animated pattern.",
+      "A heartbeat monitor line that pulses across the screen. The heart rate increases on mouse movement. Flatline on inactivity, then revival.",
+      "A snow globe scene with a tiny house inside. Shake effect on click releases swirling snow particles. Gentle settling animation.",
+      "An abstract face made of floating geometric features. The eyes follow the cursor. Expressions change based on mouse position.",
+      "A spirograph drawing itself in real-time with glowing lines. Multiple overlapping patterns. Color cycles through the rainbow smoothly."
+    ];
+
     // State
     let currentCode = '';
     let currentPrompt = '';
@@ -632,6 +686,17 @@
         promptEl.value = btn.dataset.prompt;
         promptEl.focus();
       });
+    });
+
+    // Random button
+    document.getElementById('randomBtn').addEventListener('click', () => {
+      const randomPrompt = randomPrompts[Math.floor(Math.random() * randomPrompts.length)];
+      promptEl.value = randomPrompt;
+      promptEl.focus();
+      // Visual feedback
+      const btn = document.getElementById('randomBtn');
+      btn.style.transform = 'scale(0.95)';
+      setTimeout(() => btn.style.transform = '', 150);
     });
 
     // Generate
