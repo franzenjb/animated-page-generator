@@ -186,8 +186,8 @@
       transition: all 0.2s;
     }
 
-    .save-btn:hover { border-color: var(--red); color: white; }
-    .save-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .save-btn:hover:not(:disabled) { border-color: var(--red); color: white; }
+    .save-btn:disabled { opacity: 0.4; cursor: not-allowed; color: #555; background: #1a1a1a; border-color: #333; }
 
     .status {
       margin-top: 12px;
