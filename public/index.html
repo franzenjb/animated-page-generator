@@ -36,26 +36,67 @@
       border-right: 1px solid var(--gray);
       display: flex;
       flex-direction: column;
-      padding: 30px;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 25px 25px 0;
     }
 
     .logo {
-      font-size: 32px;
+      font-size: 28px;
       font-weight: 900;
-      letter-spacing: -3px;
-      margin-bottom: 5px;
+      letter-spacing: -2px;
+      margin-bottom: 3px;
     }
 
     .logo span { color: var(--red); }
 
     .tagline {
-      font-size: 10px;
-      color: #666;
+      font-size: 9px;
+      color: #555;
       text-transform: uppercase;
       letter-spacing: 2px;
-      margin-bottom: 40px;
     }
 
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--gray);
+      margin-top: 20px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px;
+      background: transparent;
+      border: none;
+      color: #666;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab:hover { color: #999; }
+    .tab.active {
+      color: var(--white);
+      border-bottom: 2px solid var(--red);
+      margin-bottom: -1px;
+    }
+
+    /* Tab content */
+    .tab-content {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 25px;
+    }
+
+    .tab-content.active { display: flex; flex-direction: column; }
+
+    /* Create tab */
     .prompt-section {
       flex: 1;
       display: flex;
@@ -72,13 +113,14 @@
 
     textarea {
       flex: 1;
+      min-height: 120px;
       background: #111;
       border: 1px solid var(--gray);
       color: var(--white);
-      padding: 20px;
+      padding: 15px;
       font-family: 'SF Mono', Monaco, monospace;
-      font-size: 14px;
-      line-height: 1.6;
+      font-size: 13px;
+      line-height: 1.5;
       resize: none;
       border-radius: 4px;
     }
@@ -88,100 +130,245 @@
       border-color: var(--red);
     }
 
-    textarea::placeholder {
-      color: #444;
+    textarea::placeholder { color: #444; }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
     }
 
     .generate-btn {
+      flex: 1;
       background: var(--red);
       color: white;
       border: none;
-      padding: 20px 30px;
-      font-size: 14px;
+      padding: 16px 20px;
+      font-size: 12px;
       font-weight: bold;
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 1px;
       cursor: pointer;
-      margin-top: 20px;
       border-radius: 4px;
       transition: all 0.2s ease;
-      position: relative;
-      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .generate-btn:hover {
-      background: #c1121f;
-      transform: translateY(-2px);
-    }
-
-    .generate-btn:disabled {
-      background: #444;
-      cursor: not-allowed;
-      transform: none;
-    }
+    .generate-btn:hover { background: #c1121f; }
+    .generate-btn:disabled { background: #444; cursor: not-allowed; }
 
     .generate-btn .spinner {
       display: none;
-      width: 20px;
-      height: 20px;
+      width: 16px;
+      height: 16px;
       border: 2px solid rgba(255,255,255,0.3);
       border-top-color: white;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
-      margin-right: 10px;
+      margin-right: 8px;
     }
 
     .generate-btn.loading .spinner { display: inline-block; }
-    .generate-btn.loading .btn-text { opacity: 0.7; }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .save-btn {
+      background: #222;
+      border: 1px solid #444;
+      color: #888;
+      padding: 16px 20px;
+      font-size: 12px;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s;
     }
 
+    .save-btn:hover { border-color: var(--red); color: white; }
+    .save-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
     .status {
-      margin-top: 15px;
+      margin-top: 12px;
       font-size: 11px;
       font-family: monospace;
       color: #666;
-      min-height: 20px;
+      min-height: 18px;
     }
 
     .status.error { color: var(--red); }
     .status.success { color: #4CAF50; }
 
-    /* Example prompts */
-    .examples {
-      margin-top: 30px;
-      border-top: 1px solid var(--gray);
-      padding-top: 20px;
-    }
+    /* Examples */
+    .examples { margin-top: 20px; }
 
     .examples h3 {
       font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 2px;
       color: #555;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .example-btn {
       display: block;
       width: 100%;
       background: transparent;
-      border: 1px solid #333;
-      color: #888;
+      border: 1px solid #222;
+      color: #777;
       padding: 10px 12px;
-      font-size: 12px;
+      font-size: 11px;
       text-align: left;
       cursor: pointer;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       border-radius: 3px;
       transition: all 0.2s ease;
     }
 
-    .example-btn:hover {
-      border-color: var(--red);
-      color: var(--white);
+    .example-btn:hover { border-color: var(--red); color: var(--white); }
+
+    /* Library tab */
+    .library-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: #555;
+    }
+
+    .library-empty svg {
+      width: 50px;
+      height: 50px;
+      margin-bottom: 15px;
+      opacity: 0.3;
+    }
+
+    .library-item {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .library-item:hover { border-color: #444; }
+    .library-item.active { border-color: var(--red); }
+
+    .library-item-header {
+      display: flex;
+      align-items: center;
+      padding: 12px 15px;
+      cursor: pointer;
+    }
+
+    .library-item-title {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .library-item-date {
+      font-size: 10px;
+      color: #555;
+      margin-right: 10px;
+    }
+
+    .library-item-actions {
+      display: flex;
+      gap: 5px;
+    }
+
+    .library-action {
+      background: transparent;
+      border: none;
+      color: #555;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 3px;
+      transition: all 0.2s;
+    }
+
+    .library-action:hover { color: var(--red); background: rgba(230,57,70,0.1); }
+
+    .library-action svg { width: 14px; height: 14px; }
+
+    .library-item-prompt {
+      padding: 0 15px 12px;
+      font-size: 11px;
+      color: #666;
+      line-height: 1.4;
+      display: none;
+    }
+
+    .library-item.expanded .library-item-prompt { display: block; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 25px;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    .modal h3 {
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    .modal input {
+      width: 100%;
+      background: #000;
+      border: 1px solid #333;
+      color: white;
+      padding: 12px 15px;
+      font-size: 14px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+
+    .modal input:focus { outline: none; border-color: var(--red); }
+
+    .modal-btns {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .modal-btn {
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-size: 12px;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: none;
+    }
+
+    .modal-btn.cancel {
+      background: transparent;
+      border: 1px solid #444;
+      color: #888;
+    }
+
+    .modal-btn.confirm {
+      background: var(--red);
+      color: white;
     }
 
     /* Preview area */
@@ -219,12 +406,12 @@
       margin-left: 15px;
       font-size: 12px;
       color: #666;
+      flex: 1;
     }
 
     .preview-actions {
-      margin-left: auto;
       display: flex;
-      gap: 10px;
+      gap: 8px;
     }
 
     .preview-action {
@@ -238,10 +425,7 @@
       border-radius: 3px;
     }
 
-    .preview-action:hover {
-      border-color: var(--red);
-      color: white;
-    }
+    .preview-action:hover { border-color: var(--red); color: white; }
 
     iframe {
       width: 100%;
@@ -279,7 +463,6 @@
       color: #999;
     }
 
-    /* Floating shapes decoration */
     .shape {
       position: absolute;
       opacity: 0.1;
@@ -307,33 +490,49 @@
 </head>
 <body>
   <div class="container">
-    <!-- Sidebar -->
     <aside class="sidebar">
-      <div class="logo">KINETIC<span>.</span>LAB</div>
-      <div class="tagline">AI-Powered Animation Generator</div>
+      <div class="sidebar-header">
+        <div class="logo">KINETIC<span>.</span>LAB</div>
+        <div class="tagline">AI-Powered Animation Generator</div>
 
-      <div class="prompt-section">
-        <label>Describe Your Animation</label>
-        <textarea id="prompt" placeholder="A hero section with floating geometric shapes that orbit around bold typography. The word 'DESIGN' should animate letter by letter, with each letter having a different color and rotation. Include Matisse-style organic cutouts drifting in the background."></textarea>
-
-        <button class="generate-btn" id="generateBtn">
-          <span class="spinner"></span>
-          <span class="btn-text">Generate Animation</span>
-        </button>
-
-        <div class="status" id="status"></div>
+        <div class="tabs">
+          <button class="tab active" data-tab="create">Create</button>
+          <button class="tab" data-tab="library">Library</button>
+        </div>
       </div>
 
-      <div class="examples">
-        <h3>Quick Examples</h3>
-        <button class="example-btn" data-prompt="A kinetic typography hero with the word 'MOTION' where each letter floats independently and responds to mouse movement. Swiss grid background with animated red accent lines.">Kinetic Typography</button>
-        <button class="example-btn" data-prompt="An abstract data visualization showing orbiting circles of different sizes, pulsing and changing opacity. Include a counter that increments smoothly. Minimalist black and white with red highlights.">Data Visualization</button>
-        <button class="example-btn" data-prompt="A scrolling gallery of Matisse-style organic shapes that morph and dance as you scroll. Each shape should have a subtle shadow and rotate slowly. Use cream background with bold black shapes.">Matisse Shapes</button>
-        <button class="example-btn" data-prompt="A loading animation with geometric shapes assembling into the letters 'LOADING' then exploding apart and reassembling. Swiss design aesthetic with precise timing.">Loading Animation</button>
+      <!-- Create Tab -->
+      <div class="tab-content active" id="create-tab">
+        <div class="prompt-section">
+          <label>Describe Your Animation</label>
+          <textarea id="prompt" placeholder="A hero section with floating geometric shapes orbiting bold typography..."></textarea>
+
+          <div class="btn-row">
+            <button class="generate-btn" id="generateBtn">
+              <span class="spinner"></span>
+              <span class="btn-text">Generate</span>
+            </button>
+            <button class="save-btn" id="saveBtn" disabled>Save</button>
+          </div>
+
+          <div class="status" id="status"></div>
+        </div>
+
+        <div class="examples">
+          <h3>Quick Examples</h3>
+          <button class="example-btn" data-prompt="A kinetic typography hero with the word 'MOTION' where each letter floats independently and responds to mouse movement. Swiss grid background with animated red accent lines.">Kinetic Typography</button>
+          <button class="example-btn" data-prompt="An abstract data visualization showing orbiting circles of different sizes, pulsing and changing opacity. Minimalist black and white with red highlights.">Data Visualization</button>
+          <button class="example-btn" data-prompt="A scrolling gallery of Matisse-style organic shapes that morph and dance. Cream background with bold black shapes.">Matisse Shapes</button>
+          <button class="example-btn" data-prompt="A loading animation with geometric shapes assembling into 'LOADING' then exploding apart. Swiss design aesthetic.">Loading Animation</button>
+        </div>
+      </div>
+
+      <!-- Library Tab -->
+      <div class="tab-content" id="library-tab">
+        <div id="libraryList"></div>
       </div>
     </aside>
 
-    <!-- Preview -->
     <main class="preview">
       <div class="preview-header">
         <span class="preview-dot red"></span>
@@ -341,8 +540,9 @@
         <span class="preview-dot green"></span>
         <span class="preview-title" id="previewTitle">Preview</span>
         <div class="preview-actions">
+          <button class="preview-action" id="downloadBtn">Download</button>
           <button class="preview-action" id="copyBtn">Copy HTML</button>
-          <button class="preview-action" id="newTabBtn">Open in Tab</button>
+          <button class="preview-action" id="newTabBtn">Open Tab</button>
         </div>
       </div>
 
@@ -362,35 +562,71 @@
     </main>
   </div>
 
+  <!-- Rename Modal -->
+  <div class="modal-overlay" id="renameModal">
+    <div class="modal">
+      <h3>Rename Animation</h3>
+      <input type="text" id="renameInput" placeholder="Enter new name">
+      <div class="modal-btns">
+        <button class="modal-btn cancel" id="renameCancel">Cancel</button>
+        <button class="modal-btn confirm" id="renameConfirm">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirm Modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal">
+      <h3>Delete Animation?</h3>
+      <p style="color:#888;margin-bottom:20px;font-size:13px;">This action cannot be undone.</p>
+      <div class="modal-btns">
+        <button class="modal-btn cancel" id="deleteCancel">Cancel</button>
+        <button class="modal-btn confirm" id="deleteConfirm">Delete</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // State
+    let currentCode = '';
+    let currentPrompt = '';
+    let library = JSON.parse(localStorage.getItem('kinetic-library') || '[]');
+    let editingId = null;
+
+    // Elements
     const promptEl = document.getElementById('prompt');
     const generateBtn = document.getElementById('generateBtn');
+    const saveBtn = document.getElementById('saveBtn');
     const statusEl = document.getElementById('status');
     const previewFrame = document.getElementById('preview');
     const emptyState = document.getElementById('emptyState');
     const previewTitle = document.getElementById('previewTitle');
     const copyBtn = document.getElementById('copyBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
     const newTabBtn = document.getElementById('newTabBtn');
+    const libraryList = document.getElementById('libraryList');
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
     const exampleBtns = document.querySelectorAll('.example-btn');
+    const renameModal = document.getElementById('renameModal');
+    const deleteModal = document.getElementById('deleteModal');
 
-    let currentCode = '';
+    // Animate shapes
+    gsap.to('.shape-1', { rotation: 360, duration: 60, repeat: -1, ease: 'none' });
+    gsap.to('.shape-2', { rotation: -360, duration: 80, repeat: -1, ease: 'none' });
 
-    // Animate shapes on load
-    gsap.to('.shape-1', {
-      rotation: 360,
-      duration: 60,
-      repeat: -1,
-      ease: 'none'
+    // Tabs
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+        if (tab.dataset.tab === 'library') renderLibrary();
+      });
     });
 
-    gsap.to('.shape-2', {
-      rotation: -360,
-      duration: 80,
-      repeat: -1,
-      ease: 'none'
-    });
-
-    // Example buttons
+    // Examples
     exampleBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         promptEl.value = btn.dataset.prompt;
@@ -401,7 +637,6 @@
     // Generate
     generateBtn.addEventListener('click', async () => {
       const prompt = promptEl.value.trim();
-
       if (!prompt) {
         statusEl.textContent = 'Please enter a prompt';
         statusEl.className = 'status error';
@@ -410,6 +645,7 @@
 
       generateBtn.classList.add('loading');
       generateBtn.disabled = true;
+      saveBtn.disabled = true;
       statusEl.textContent = 'Generating animation...';
       statusEl.className = 'status';
 
@@ -421,18 +657,17 @@
         });
 
         const data = await response.json();
-
-        if (data.error) {
-          throw new Error(data.error);
-        }
+        if (data.error) throw new Error(data.error);
 
         currentCode = data.code;
+        currentPrompt = prompt;
         previewFrame.srcdoc = currentCode;
         previewFrame.style.display = 'block';
         emptyState.style.display = 'none';
         previewTitle.textContent = 'Generated Animation';
+        saveBtn.disabled = false;
 
-        statusEl.textContent = `Generated ${currentCode.length.toLocaleString()} characters`;
+        statusEl.textContent = `Generated ${currentCode.length.toLocaleString()} chars`;
         statusEl.className = 'status success';
 
       } catch (error) {
@@ -444,7 +679,155 @@
       }
     });
 
-    // Copy HTML
+    // Save
+    saveBtn.addEventListener('click', () => {
+      if (!currentCode) return;
+
+      const item = {
+        id: Date.now().toString(),
+        name: 'Animation ' + (library.length + 1),
+        prompt: currentPrompt,
+        code: currentCode,
+        date: new Date().toLocaleDateString()
+      };
+
+      library.unshift(item);
+      saveLibrary();
+      statusEl.textContent = 'Saved to library!';
+      statusEl.className = 'status success';
+
+      // Switch to library tab
+      tabs[1].click();
+    });
+
+    // Library functions
+    function saveLibrary() {
+      localStorage.setItem('kinetic-library', JSON.stringify(library));
+    }
+
+    function renderLibrary() {
+      if (library.length === 0) {
+        libraryList.innerHTML = `
+          <div class="library-empty">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"/>
+            </svg>
+            <p>No saved animations yet</p>
+            <p style="font-size:11px;margin-top:8px;">Create and save animations to see them here</p>
+          </div>
+        `;
+        return;
+      }
+
+      libraryList.innerHTML = library.map(item => `
+        <div class="library-item" data-id="${item.id}">
+          <div class="library-item-header">
+            <span class="library-item-title">${item.name}</span>
+            <span class="library-item-date">${item.date}</span>
+            <div class="library-item-actions">
+              <button class="library-action" data-action="rename" title="Rename">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+              </button>
+              <button class="library-action" data-action="delete" title="Delete">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="library-item-prompt">${item.prompt.substring(0, 120)}${item.prompt.length > 120 ? '...' : ''}</div>
+        </div>
+      `).join('');
+
+      // Add event listeners
+      libraryList.querySelectorAll('.library-item').forEach(el => {
+        const id = el.dataset.id;
+
+        el.querySelector('.library-item-header').addEventListener('click', (e) => {
+          if (e.target.closest('.library-action')) return;
+          loadFromLibrary(id);
+        });
+
+        el.querySelector('[data-action="rename"]').addEventListener('click', () => openRenameModal(id));
+        el.querySelector('[data-action="delete"]').addEventListener('click', () => openDeleteModal(id));
+      });
+    }
+
+    function loadFromLibrary(id) {
+      const item = library.find(i => i.id === id);
+      if (!item) return;
+
+      currentCode = item.code;
+      currentPrompt = item.prompt;
+      promptEl.value = item.prompt;
+      previewFrame.srcdoc = item.code;
+      previewFrame.style.display = 'block';
+      emptyState.style.display = 'none';
+      previewTitle.textContent = item.name;
+      saveBtn.disabled = false;
+
+      // Highlight active
+      libraryList.querySelectorAll('.library-item').forEach(el => el.classList.remove('active'));
+      libraryList.querySelector(`[data-id="${id}"]`).classList.add('active');
+    }
+
+    function openRenameModal(id) {
+      editingId = id;
+      const item = library.find(i => i.id === id);
+      document.getElementById('renameInput').value = item.name;
+      renameModal.classList.add('active');
+      document.getElementById('renameInput').focus();
+    }
+
+    function openDeleteModal(id) {
+      editingId = id;
+      deleteModal.classList.add('active');
+    }
+
+    // Modal handlers
+    document.getElementById('renameCancel').addEventListener('click', () => {
+      renameModal.classList.remove('active');
+      editingId = null;
+    });
+
+    document.getElementById('renameConfirm').addEventListener('click', () => {
+      const newName = document.getElementById('renameInput').value.trim();
+      if (newName && editingId) {
+        const item = library.find(i => i.id === editingId);
+        if (item) {
+          item.name = newName;
+          saveLibrary();
+          renderLibrary();
+        }
+      }
+      renameModal.classList.remove('active');
+      editingId = null;
+    });
+
+    document.getElementById('deleteCancel').addEventListener('click', () => {
+      deleteModal.classList.remove('active');
+      editingId = null;
+    });
+
+    document.getElementById('deleteConfirm').addEventListener('click', () => {
+      if (editingId) {
+        library = library.filter(i => i.id !== editingId);
+        saveLibrary();
+        renderLibrary();
+      }
+      deleteModal.classList.remove('active');
+      editingId = null;
+    });
+
+    // Close modals on overlay click
+    [renameModal, deleteModal].forEach(modal => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.remove('active');
+          editingId = null;
+        }
+      });
+    });
+
+    // Preview actions
     copyBtn.addEventListener('click', () => {
       if (!currentCode) return;
       navigator.clipboard.writeText(currentCode);
@@ -452,7 +835,17 @@
       setTimeout(() => copyBtn.textContent = 'Copy HTML', 2000);
     });
 
-    // Open in new tab
+    downloadBtn.addEventListener('click', () => {
+      if (!currentCode) return;
+      const blob = new Blob([currentCode], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'animation.html';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
     newTabBtn.addEventListener('click', () => {
       if (!currentCode) return;
       const blob = new Blob([currentCode], { type: 'text/html' });
@@ -460,12 +853,18 @@
       window.open(url, '_blank');
     });
 
-    // Ctrl/Cmd + Enter to generate
+    // Keyboard shortcuts
     promptEl.addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        generateBtn.click();
-      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generateBtn.click();
     });
+
+    document.getElementById('renameInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('renameConfirm').click();
+      if (e.key === 'Escape') document.getElementById('renameCancel').click();
+    });
+
+    // Initial render
+    renderLibrary();
   </script>
 </body>
 </html>
