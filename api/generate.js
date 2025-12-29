@@ -1,4 +1,4 @@
-const Anthropic = require('@anthropic-ai/sdk').default;
+import Anthropic from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic();
 
@@ -37,7 +37,7 @@ STRUCTURE:
 </body>
 </html>`;
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

@@ -175,19 +175,20 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .save-btn {
-      background: #222;
-      border: 1px solid #444;
-      color: #888;
+      background: #333;
+      border: 2px solid #666;
+      color: #fff;
       padding: 16px 20px;
       font-size: 12px;
+      font-weight: bold;
       text-transform: uppercase;
       cursor: pointer;
       border-radius: 4px;
       transition: all 0.2s;
     }
 
-    .save-btn:hover:not(:disabled) { border-color: var(--red); color: white; }
-    .save-btn:disabled { opacity: 0.4; cursor: not-allowed; color: #555; background: #1a1a1a; border-color: #333; }
+    .save-btn:hover:not(:disabled) { border-color: var(--red); background: #444; }
+    .save-btn:disabled { opacity: 0.5; cursor: not-allowed; color: #888; background: #222; border-color: #444; }
 
     .status {
       margin-top: 12px;
