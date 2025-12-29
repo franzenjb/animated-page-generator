@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kinetic Page Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --black: #0a0a0a;
+      --white: #fafafa;
+      --red: #E63946;
+      --cream: #F1FAEE;
+      --gray: #333;
+    }
+
+    body {
+      font-family: Helvetica, Arial, sans-serif;
+      background: var(--black);
+      color: var(--white);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: var(--black);
+      border-right: 1px solid var(--gray);
+      display: flex;
+      flex-direction: column;
+      padding: 30px;
+    }
+
+    .logo {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: -3px;
+      margin-bottom: 5px;
+    }
+
+    .logo span { color: var(--red); }
+
+    .tagline {
+      font-size: 10px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 40px;
+    }
+
+    .prompt-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      flex: 1;
+      background: #111;
+      border: 1px solid var(--gray);
+      color: var(--white);
+      padding: 20px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      resize: none;
+      border-radius: 4px;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--red);
+    }
+
+    textarea::placeholder {
+      color: #444;
+    }
+
+    .generate-btn {
+      background: var(--red);
+      color: white;
+      border: none;
+      padding: 20px 30px;
+      font-size: 14px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      cursor: pointer;
+      margin-top: 20px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .generate-btn:hover {
+      background: #c1121f;
+      transform: translateY(-2px);
+    }
+
+    .generate-btn:disabled {
+      background: #444;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .generate-btn .spinner {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 10px;
+    }
+
+    .generate-btn.loading .spinner { display: inline-block; }
+    .generate-btn.loading .btn-text { opacity: 0.7; }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .status {
+      margin-top: 15px;
+      font-size: 11px;
+      font-family: monospace;
+      color: #666;
+      min-height: 20px;
+    }
+
+    .status.error { color: var(--red); }
+    .status.success { color: #4CAF50; }
+
+    /* Example prompts */
+    .examples {
+      margin-top: 30px;
+      border-top: 1px solid var(--gray);
+      padding-top: 20px;
+    }
+
+    .examples h3 {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #555;
+      margin-bottom: 12px;
+    }
+
+    .example-btn {
+      display: block;
+      width: 100%;
+      background: transparent;
+      border: 1px solid #333;
+      color: #888;
+      padding: 10px 12px;
+      font-size: 12px;
+      text-align: left;
+      cursor: pointer;
+      margin-bottom: 8px;
+      border-radius: 3px;
+      transition: all 0.2s ease;
+    }
+
+    .example-btn:hover {
+      border-color: var(--red);
+      color: var(--white);
+    }
+
+    /* Preview area */
+    .preview {
+      background: var(--cream);
+      position: relative;
+    }
+
+    .preview-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 40px;
+      background: var(--black);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      z-index: 10;
+      border-bottom: 1px solid var(--gray);
+    }
+
+    .preview-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .preview-dot.red { background: #ff5f56; }
+    .preview-dot.yellow { background: #ffbd2e; }
+    .preview-dot.green { background: #27c93f; }
+
+    .preview-title {
+      margin-left: 15px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .preview-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 10px;
+    }
+
+    .preview-action {
+      background: #222;
+      border: 1px solid #444;
+      color: #888;
+      padding: 5px 12px;
+      font-size: 10px;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
+    .preview-action:hover {
+      border-color: var(--red);
+      color: white;
+    }
+
+    iframe {
+      width: 100%;
+      height: calc(100% - 40px);
+      margin-top: 40px;
+      border: none;
+      background: white;
+    }
+
+    .empty-state {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: #999;
+    }
+
+    .empty-state svg {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 20px;
+      opacity: 0.3;
+    }
+
+    .empty-state h2 {
+      font-size: 18px;
+      font-weight: 400;
+      margin-bottom: 8px;
+      color: #666;
+    }
+
+    .empty-state p {
+      font-size: 13px;
+      color: #999;
+    }
+
+    /* Floating shapes decoration */
+    .shape {
+      position: absolute;
+      opacity: 0.1;
+      pointer-events: none;
+    }
+
+    .shape-1 {
+      top: 15%;
+      right: 10%;
+      width: 200px;
+      height: 200px;
+      background: var(--red);
+      border-radius: 50% 50% 50% 0;
+    }
+
+    .shape-2 {
+      bottom: 20%;
+      right: 25%;
+      width: 150px;
+      height: 150px;
+      background: var(--black);
+      border-radius: 0 50% 50% 50%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">KINETIC<span>.</span>LAB</div>
+      <div class="tagline">AI-Powered Animation Generator</div>
+
+      <div class="prompt-section">
+        <label>Describe Your Animation</label>
+        <textarea id="prompt" placeholder="A hero section with floating geometric shapes that orbit around bold typography. The word 'DESIGN' should animate letter by letter, with each letter having a different color and rotation. Include Matisse-style organic cutouts drifting in the background."></textarea>
+
+        <button class="generate-btn" id="generateBtn">
+          <span class="spinner"></span>
+          <span class="btn-text">Generate Animation</span>
+        </button>
+
+        <div class="status" id="status"></div>
+      </div>
+
+      <div class="examples">
+        <h3>Quick Examples</h3>
+        <button class="example-btn" data-prompt="A kinetic typography hero with the word 'MOTION' where each letter floats independently and responds to mouse movement. Swiss grid background with animated red accent lines.">Kinetic Typography</button>
+        <button class="example-btn" data-prompt="An abstract data visualization showing orbiting circles of different sizes, pulsing and changing opacity. Include a counter that increments smoothly. Minimalist black and white with red highlights.">Data Visualization</button>
+        <button class="example-btn" data-prompt="A scrolling gallery of Matisse-style organic shapes that morph and dance as you scroll. Each shape should have a subtle shadow and rotate slowly. Use cream background with bold black shapes.">Matisse Shapes</button>
+        <button class="example-btn" data-prompt="A loading animation with geometric shapes assembling into the letters 'LOADING' then exploding apart and reassembling. Swiss design aesthetic with precise timing.">Loading Animation</button>
+      </div>
+    </aside>
+
+    <!-- Preview -->
+    <main class="preview">
+      <div class="preview-header">
+        <span class="preview-dot red"></span>
+        <span class="preview-dot yellow"></span>
+        <span class="preview-dot green"></span>
+        <span class="preview-title" id="previewTitle">Preview</span>
+        <div class="preview-actions">
+          <button class="preview-action" id="copyBtn">Copy HTML</button>
+          <button class="preview-action" id="newTabBtn">Open in Tab</button>
+        </div>
+      </div>
+
+      <div class="empty-state" id="emptyState">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+          <path d="M7 12h2v5H7zm4-3h2v8h-2zm4-3h2v11h-2z"/>
+        </svg>
+        <h2>No animation yet</h2>
+        <p>Enter a prompt and click Generate</p>
+      </div>
+
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+
+      <iframe id="preview" style="display: none;"></iframe>
+    </main>
+  </div>
+
+  <script>
+    const promptEl = document.getElementById('prompt');
+    const generateBtn = document.getElementById('generateBtn');
+    const statusEl = document.getElementById('status');
+    const previewFrame = document.getElementById('preview');
+    const emptyState = document.getElementById('emptyState');
+    const previewTitle = document.getElementById('previewTitle');
+    const copyBtn = document.getElementById('copyBtn');
+    const newTabBtn = document.getElementById('newTabBtn');
+    const exampleBtns = document.querySelectorAll('.example-btn');
+
+    let currentCode = '';
+
+    // Animate shapes on load
+    gsap.to('.shape-1', {
+      rotation: 360,
+      duration: 60,
+      repeat: -1,
+      ease: 'none'
+    });
+
+    gsap.to('.shape-2', {
+      rotation: -360,
+      duration: 80,
+      repeat: -1,
+      ease: 'none'
+    });
+
+    // Example buttons
+    exampleBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        promptEl.value = btn.dataset.prompt;
+        promptEl.focus();
+      });
+    });
+
+    // Generate
+    generateBtn.addEventListener('click', async () => {
+      const prompt = promptEl.value.trim();
+
+      if (!prompt) {
+        statusEl.textContent = 'Please enter a prompt';
+        statusEl.className = 'status error';
+        return;
+      }
+
+      generateBtn.classList.add('loading');
+      generateBtn.disabled = true;
+      statusEl.textContent = 'Generating animation...';
+      statusEl.className = 'status';
+
+      try {
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        currentCode = data.code;
+        previewFrame.srcdoc = currentCode;
+        previewFrame.style.display = 'block';
+        emptyState.style.display = 'none';
+        previewTitle.textContent = 'Generated Animation';
+
+        statusEl.textContent = `Generated ${currentCode.length.toLocaleString()} characters`;
+        statusEl.className = 'status success';
+
+      } catch (error) {
+        statusEl.textContent = error.message;
+        statusEl.className = 'status error';
+      } finally {
+        generateBtn.classList.remove('loading');
+        generateBtn.disabled = false;
+      }
+    });
+
+    // Copy HTML
+    copyBtn.addEventListener('click', () => {
+      if (!currentCode) return;
+      navigator.clipboard.writeText(currentCode);
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => copyBtn.textContent = 'Copy HTML', 2000);
+    });
+
+    // Open in new tab
+    newTabBtn.addEventListener('click', () => {
+      if (!currentCode) return;
+      const blob = new Blob([currentCode], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    });
+
+    // Ctrl/Cmd + Enter to generate
+    promptEl.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        generateBtn.click();
+      }
+    });
+  </script>
+</body>
+</html>
