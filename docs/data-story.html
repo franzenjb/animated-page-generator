@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Story</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0a;
+      font-family: 'IBM Plex Sans', sans-serif;
+      color: #fafafa;
+      line-height: 1.6;
+    }
+
+    /* Progress */
+    .progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 2px;
+      background: #3b82f6;
+      z-index: 1000;
+      transform-origin: left;
+      transform: scaleX(0);
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+      background: linear-gradient(to bottom, #0a0a0a, transparent);
+    }
+
+    .logo {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+    }
+
+    .nav-info {
+      font-size: 11px;
+      color: #555;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    /* Hero */
+    .hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 10vw;
+      position: relative;
+    }
+
+    .hero-meta {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: #3b82f6;
+      margin-bottom: 20px;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .hero-title {
+      font-size: clamp(36px, 6vw, 72px);
+      font-weight: 300;
+      line-height: 1.2;
+      max-width: 800px;
+      margin-bottom: 30px;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .hero-title strong {
+      font-weight: 600;
+      color: #3b82f6;
+    }
+
+    .hero-subtitle {
+      font-size: 16px;
+      color: #666;
+      max-width: 500px;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .scroll-cue {
+      position: absolute;
+      bottom: 60px;
+      left: 10vw;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+    }
+
+    .scroll-cue::before {
+      content: '';
+      width: 30px;
+      height: 1px;
+      background: #333;
+    }
+
+    /* Sections */
+    .section {
+      padding: 15vh 10vw;
+      position: relative;
+    }
+
+    .section-header {
+      margin-bottom: 60px;
+    }
+
+    .section-number {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: #3b82f6;
+      margin-bottom: 15px;
+      opacity: 0;
+    }
+
+    .section-title {
+      font-size: clamp(28px, 4vw, 48px);
+      font-weight: 300;
+      margin-bottom: 20px;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .section-desc {
+      font-size: 15px;
+      color: #666;
+      max-width: 600px;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    /* Big number stat */
+    .big-stat {
+      text-align: center;
+      padding: 15vh 0;
+    }
+
+    .big-number {
+      font-size: clamp(80px, 20vw, 250px);
+      font-weight: 600;
+      line-height: 1;
+      color: #1a1a1a;
+      font-family: 'IBM Plex Mono', monospace;
+      position: relative;
+    }
+
+    .big-number span {
+      position: relative;
+      z-index: 2;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      opacity: 0;
+      transform: scale(0.8);
+    }
+
+    .big-label {
+      font-size: 14px;
+      color: #555;
+      margin-top: 20px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    /* Bar chart */
+    .chart-container {
+      padding: 60px 0;
+    }
+
+    .chart-title {
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 30px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    .bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .bar-label {
+      width: 120px;
+      font-size: 13px;
+      color: #888;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .bar-track {
+      flex: 1;
+      height: 8px;
+      background: #1a1a1a;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+      border-radius: 4px;
+      transform-origin: left;
+      transform: scaleX(0);
+      transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .bar-value {
+      width: 60px;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: 'IBM Plex Mono', monospace;
+      opacity: 0;
+    }
+
+    /* Line chart */
+    .line-chart-container {
+      position: relative;
+      height: 300px;
+      margin: 60px 0;
+    }
+
+    .line-chart-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .chart-line {
+      fill: none;
+      stroke: url(#lineGradient);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+      transition: stroke-dashoffset 2s ease;
+    }
+
+    .chart-line.revealed {
+      stroke-dashoffset: 0;
+    }
+
+    .chart-area {
+      fill: url(#areaGradient);
+      opacity: 0;
+      transition: opacity 1s ease 0.5s;
+    }
+
+    .chart-area.revealed {
+      opacity: 1;
+    }
+
+    .chart-dot {
+      fill: #3b82f6;
+      opacity: 0;
+      transform: scale(0);
+      transition: all 0.3s ease;
+    }
+
+    .chart-dot.revealed {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .chart-grid line {
+      stroke: #1a1a1a;
+      stroke-width: 1;
+    }
+
+    .chart-axis-label {
+      font-size: 10px;
+      fill: #444;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    /* Metric cards */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      margin: 60px 0;
+    }
+
+    .metric-card {
+      background: #111;
+      border: 1px solid #1a1a1a;
+      padding: 40px;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .metric-card.revealed {
+      opacity: 1;
+      transform: translateY(0);
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .metric-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .metric-value {
+      font-size: 36px;
+      font-weight: 600;
+      font-family: 'IBM Plex Mono', monospace;
+      margin-bottom: 8px;
+    }
+
+    .metric-label {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .metric-change {
+      font-size: 12px;
+      color: #10b981;
+      margin-top: 15px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    .metric-change.negative {
+      color: #ef4444;
+    }
+
+    /* Conclusion */
+    .conclusion {
+      padding: 20vh 10vw;
+      text-align: center;
+    }
+
+    .conclusion-title {
+      font-size: clamp(32px, 5vw, 56px);
+      font-weight: 300;
+      margin-bottom: 30px;
+      opacity: 0;
+    }
+
+    .conclusion-cta {
+      display: inline-block;
+      padding: 15px 40px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 4px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .conclusion-cta:hover {
+      transform: translateY(-2px);
+    }
+
+    /* Mouse follower */
+    .cursor-glow {
+      position: fixed;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @media (max-width: 768px) {
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+      .bar-label {
+        width: 80px;
+        font-size: 11px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+  <div class="cursor-glow" id="cursorGlow"></div>
+
+  <nav>
+    <div class="logo">DATA.VIZ</div>
+    <div class="nav-info">Annual Report 2024</div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-meta" id="heroMeta">REPORT // 2024</div>
+    <h1 class="hero-title" id="heroTitle">
+      The year we crossed <strong>one billion</strong> data points
+    </h1>
+    <p class="hero-subtitle" id="heroSubtitle">
+      A visual exploration of our platform's growth, user engagement, and the metrics that matter.
+    </p>
+    <div class="scroll-cue" id="scrollCue">Scroll to explore</div>
+  </section>
+
+  <!-- Big stat -->
+  <section class="section">
+    <div class="big-stat">
+      <div class="big-number"><span id="bigNumber">0</span>B</div>
+      <div class="big-label" id="bigLabel">Data Points Processed</div>
+    </div>
+  </section>
+
+  <!-- Growth section -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-number" id="sec1Num">01</div>
+      <h2 class="section-title" id="sec1Title">Platform Growth</h2>
+      <p class="section-desc" id="sec1Desc">Year-over-year analysis reveals consistent upward trajectory across all key performance indicators.</p>
+    </div>
+
+    <div class="line-chart-container">
+      <svg class="line-chart-svg" viewBox="0 0 800 300" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#3b82f6"/>
+            <stop offset="100%" stop-color="#8b5cf6"/>
+          </linearGradient>
+          <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="rgba(59,130,246,0.3)"/>
+            <stop offset="100%" stop-color="rgba(59,130,246,0)"/>
+          </linearGradient>
+        </defs>
+
+        <g class="chart-grid">
+          <line x1="0" y1="60" x2="800" y2="60"/>
+          <line x1="0" y1="120" x2="800" y2="120"/>
+          <line x1="0" y1="180" x2="800" y2="180"/>
+          <line x1="0" y1="240" x2="800" y2="240"/>
+        </g>
+
+        <text class="chart-axis-label" x="10" y="60">1B</text>
+        <text class="chart-axis-label" x="10" y="120">750M</text>
+        <text class="chart-axis-label" x="10" y="180">500M</text>
+        <text class="chart-axis-label" x="10" y="240">250M</text>
+
+        <path class="chart-area" id="chartArea" d="M50,260 L150,220 L250,200 L350,170 L450,140 L550,100 L650,80 L750,40 L750,260 Z"/>
+        <path class="chart-line" id="chartLine" d="M50,260 L150,220 L250,200 L350,170 L450,140 L550,100 L650,80 L750,40"/>
+
+        <circle class="chart-dot" cx="50" cy="260" r="4" data-delay="0"/>
+        <circle class="chart-dot" cx="150" cy="220" r="4" data-delay="1"/>
+        <circle class="chart-dot" cx="250" cy="200" r="4" data-delay="2"/>
+        <circle class="chart-dot" cx="350" cy="170" r="4" data-delay="3"/>
+        <circle class="chart-dot" cx="450" cy="140" r="4" data-delay="4"/>
+        <circle class="chart-dot" cx="550" cy="100" r="4" data-delay="5"/>
+        <circle class="chart-dot" cx="650" cy="80" r="4" data-delay="6"/>
+        <circle class="chart-dot" cx="750" cy="40" r="6" data-delay="7"/>
+
+        <text class="chart-axis-label" x="50" y="280">Q1 '23</text>
+        <text class="chart-axis-label" x="250" y="280">Q3 '23</text>
+        <text class="chart-axis-label" x="450" y="280">Q1 '24</text>
+        <text class="chart-axis-label" x="650" y="280">Q3 '24</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Distribution section -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-number" id="sec2Num">02</div>
+      <h2 class="section-title" id="sec2Title">User Distribution</h2>
+      <p class="section-desc" id="sec2Desc">Geographic breakdown of our active user base across major regions.</p>
+    </div>
+
+    <div class="chart-container" id="barChartContainer">
+      <div class="chart-title">Active Users by Region (millions)</div>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <div class="bar-label">North America</div>
+          <div class="bar-track"><div class="bar-fill" data-value="85"></div></div>
+          <div class="bar-value">42.5M</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Europe</div>
+          <div class="bar-track"><div class="bar-fill" data-value="70"></div></div>
+          <div class="bar-value">35.2M</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Asia Pacific</div>
+          <div class="bar-track"><div class="bar-fill" data-value="95"></div></div>
+          <div class="bar-value">48.1M</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Latin America</div>
+          <div class="bar-track"><div class="bar-fill" data-value="45"></div></div>
+          <div class="bar-value">22.8M</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Other</div>
+          <div class="bar-track"><div class="bar-fill" data-value="25"></div></div>
+          <div class="bar-value">12.4M</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Metrics section -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-number" id="sec3Num">03</div>
+      <h2 class="section-title" id="sec3Title">Key Metrics</h2>
+      <p class="section-desc" id="sec3Desc">Performance indicators that define our success and guide our roadmap.</p>
+    </div>
+
+    <div class="metrics-grid" id="metricsGrid">
+      <div class="metric-card">
+        <div class="metric-icon">+</div>
+        <div class="metric-value">161M</div>
+        <div class="metric-label">Monthly Active Users</div>
+        <div class="metric-change">+23.4% YoY</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">*</div>
+        <div class="metric-value">4.2s</div>
+        <div class="metric-label">Avg. Response Time</div>
+        <div class="metric-change">-18.2% YoY</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">!</div>
+        <div class="metric-value">99.97%</div>
+        <div class="metric-label">Platform Uptime</div>
+        <div class="metric-change">+0.12% YoY</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Conclusion -->
+  <section class="conclusion">
+    <h2 class="conclusion-title" id="conclusionTitle">The data speaks for itself</h2>
+    <a href="#" class="conclusion-cta" id="conclusionCta">Download Full Report</a>
+  </section>
+
+  <script>
+    const cursorGlow = document.getElementById('cursorGlow');
+    const progress = document.getElementById('progress');
+
+    let mouseX = 0, mouseY = 0;
+    let glowX = 0, glowY = 0;
+
+    // Mouse tracking
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    function animateGlow() {
+      glowX += (mouseX - glowX) * 0.1;
+      glowY += (mouseY - glowY) * 0.1;
+      cursorGlow.style.left = glowX - 150 + 'px';
+      cursorGlow.style.top = glowY - 150 + 'px';
+      requestAnimationFrame(animateGlow);
+    }
+    animateGlow();
+
+    // Hero animations
+    setTimeout(() => {
+      document.getElementById('heroMeta').style.transition = 'all 0.6s ease';
+      document.getElementById('heroMeta').style.opacity = '1';
+      document.getElementById('heroMeta').style.transform = 'translateY(0)';
+
+      setTimeout(() => {
+        document.getElementById('heroTitle').style.transition = 'all 0.8s ease';
+        document.getElementById('heroTitle').style.opacity = '1';
+        document.getElementById('heroTitle').style.transform = 'translateY(0)';
+      }, 200);
+
+      setTimeout(() => {
+        document.getElementById('heroSubtitle').style.transition = 'all 0.6s ease';
+        document.getElementById('heroSubtitle').style.opacity = '1';
+        document.getElementById('heroSubtitle').style.transform = 'translateY(0)';
+      }, 400);
+
+      setTimeout(() => {
+        document.getElementById('scrollCue').style.transition = 'all 0.6s ease';
+        document.getElementById('scrollCue').style.opacity = '1';
+      }, 800);
+    }, 300);
+
+    // Counter animation
+    function animateCounter(element, target, suffix = '') {
+      let current = 0;
+      const duration = 2000;
+      const steps = 60;
+      const increment = target / steps;
+      const stepDuration = duration / steps;
+
+      const interval = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+          current = target;
+          clearInterval(interval);
+        }
+        element.textContent = current.toFixed(1) + suffix;
+      }, stepDuration);
+    }
+
+    // Scroll handling
+    let bigNumberAnimated = false;
+    let chartAnimated = false;
+    let barsAnimated = false;
+
+    window.addEventListener('scroll', () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      progress.style.transform = `scaleX(${scrollTop / docHeight})`;
+
+      // Big number
+      const bigNumber = document.getElementById('bigNumber');
+      const bigLabel = document.getElementById('bigLabel');
+      if (!bigNumberAnimated && bigNumber.getBoundingClientRect().top < window.innerHeight * 0.7) {
+        bigNumberAnimated = true;
+        bigNumber.parentElement.querySelector('span').style.transition = 'all 1s ease';
+        bigNumber.parentElement.querySelector('span').style.opacity = '1';
+        bigNumber.parentElement.querySelector('span').style.transform = 'scale(1)';
+        animateCounter(bigNumber, 1.2);
+
+        setTimeout(() => {
+          bigLabel.style.transition = 'all 0.6s ease';
+          bigLabel.style.opacity = '1';
+          bigLabel.style.transform = 'translateY(0)';
+        }, 500);
+      }
+
+      // Section headers
+      document.querySelectorAll('.section-number').forEach(el => {
+        if (el.getBoundingClientRect().top < window.innerHeight * 0.8) {
+          el.style.transition = 'opacity 0.4s ease';
+          el.style.opacity = '1';
+        }
+      });
+
+      document.querySelectorAll('.section-title').forEach(el => {
+        if (el.getBoundingClientRect().top < window.innerHeight * 0.8) {
+          el.style.transition = 'all 0.6s ease';
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+        }
+      });
+
+      document.querySelectorAll('.section-desc').forEach(el => {
+        if (el.getBoundingClientRect().top < window.innerHeight * 0.8) {
+          el.style.transition = 'all 0.6s ease 0.2s';
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+        }
+      });
+
+      // Line chart
+      const chartLine = document.getElementById('chartLine');
+      const chartArea = document.getElementById('chartArea');
+      if (!chartAnimated && chartLine.getBoundingClientRect().top < window.innerHeight * 0.7) {
+        chartAnimated = true;
+        chartLine.classList.add('revealed');
+        chartArea.classList.add('revealed');
+
+        document.querySelectorAll('.chart-dot').forEach((dot, i) => {
+          setTimeout(() => {
+            dot.classList.add('revealed');
+          }, 300 + i * 200);
+        });
+      }
+
+      // Bar chart
+      const barContainer = document.getElementById('barChartContainer');
+      if (!barsAnimated && barContainer.getBoundingClientRect().top < window.innerHeight * 0.7) {
+        barsAnimated = true;
+        document.querySelectorAll('.bar-fill').forEach((bar, i) => {
+          setTimeout(() => {
+            bar.style.transform = `scaleX(${bar.dataset.value / 100})`;
+            bar.parentElement.parentElement.querySelector('.bar-value').style.transition = 'opacity 0.4s ease';
+            bar.parentElement.parentElement.querySelector('.bar-value').style.opacity = '1';
+          }, i * 150);
+        });
+      }
+
+      // Metric cards
+      const metricsGrid = document.getElementById('metricsGrid');
+      if (metricsGrid.getBoundingClientRect().top < window.innerHeight * 0.7) {
+        document.querySelectorAll('.metric-card').forEach((card, i) => {
+          setTimeout(() => {
+            card.classList.add('revealed');
+          }, i * 150);
+        });
+      }
+
+      // Conclusion
+      const conclusionTitle = document.getElementById('conclusionTitle');
+      const conclusionCta = document.getElementById('conclusionCta');
+      if (conclusionTitle.getBoundingClientRect().top < window.innerHeight * 0.7) {
+        conclusionTitle.style.transition = 'opacity 0.8s ease';
+        conclusionTitle.style.opacity = '1';
+
+        setTimeout(() => {
+          conclusionCta.style.transition = 'all 0.6s ease';
+          conclusionCta.style.opacity = '1';
+          conclusionCta.style.transform = 'translateY(0)';
+        }, 300);
+      }
+    });
+  </script>
+</body>
+</html>

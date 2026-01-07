@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Typewriter AI</title>
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/style.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-mono/style.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <style>
+    :root {
+      --realie-bg: #181b1b;
+      --realie-bg-elevated: #1e2222;
+      --realie-accent: #0d4a47;
+      --realie-accent-glow: #14b8a6;
+      --realie-text: #ede9fe;
+      --realie-text-muted: #71717a;
+      --realie-border: rgba(237, 233, 254, 0.06);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--realie-bg);
+      min-height: 100vh;
+      font-family: 'Geist', system-ui, sans-serif;
+      color: var(--realie-text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .back-link {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      color: var(--realie-text-muted);
+      text-decoration: none;
+      z-index: 100;
+      padding: 8px 16px;
+      border: 1px solid rgba(237, 233, 254, 0.1);
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .back-link:hover {
+      color: var(--realie-accent-glow);
+      border-color: var(--realie-accent-glow);
+    }
+
+    /* Header */
+    .header {
+      padding: 30px;
+      border-bottom: 1px solid var(--realie-border);
+    }
+
+    .header-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--realie-accent-glow);
+      margin-bottom: 8px;
+    }
+
+    .header-title {
+      font-size: 24px;
+      font-weight: 300;
+    }
+
+    /* Chat container */
+    .chat-container {
+      flex: 1;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 40px 30px;
+      overflow-y: auto;
+    }
+
+    /* Message */
+    .message {
+      margin-bottom: 30px;
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    .message.visible {
+      opacity: 1;
+      transform: translateY(0);
+      transition: all 0.4s ease-out;
+    }
+
+    .message-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .message-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .message-avatar.user {
+      background: var(--realie-accent);
+      color: var(--realie-text);
+    }
+
+    .message-avatar.ai {
+      background: linear-gradient(135deg, var(--realie-accent-glow), #0d9488);
+      color: #000;
+    }
+
+    .message-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--realie-text);
+    }
+
+    .message-time {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      color: var(--realie-text-muted);
+    }
+
+    .message-content {
+      padding-left: 44px;
+    }
+
+    .message-text {
+      font-size: 15px;
+      line-height: 1.7;
+      color: rgba(237, 233, 254, 0.9);
+    }
+
+    .message-text p {
+      margin-bottom: 16px;
+    }
+
+    .message-text p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Typing cursor */
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1.2em;
+      background: var(--realie-accent-glow);
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    /* Code block */
+    .code-block {
+      background: #0d0f0f;
+      border: 1px solid var(--realie-border);
+      border-radius: 8px;
+      margin: 16px 0;
+      overflow: hidden;
+    }
+
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      background: rgba(0, 0, 0, 0.3);
+      border-bottom: 1px solid var(--realie-border);
+    }
+
+    .code-lang {
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      color: var(--realie-text-muted);
+    }
+
+    .code-copy {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      color: var(--realie-text-muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .code-copy:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--realie-text);
+    }
+
+    .code-content {
+      padding: 16px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+
+    /* Syntax highlighting */
+    .token-keyword { color: #c792ea; }
+    .token-function { color: #82aaff; }
+    .token-string { color: #c3e88d; }
+    .token-number { color: #f78c6c; }
+    .token-comment { color: #546e7a; font-style: italic; }
+    .token-operator { color: #89ddff; }
+    .token-property { color: #ffcb6b; }
+
+    /* Thinking indicator */
+    .thinking {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: var(--realie-bg-elevated);
+      border-radius: 12px;
+      margin-bottom: 12px;
+      width: fit-content;
+    }
+
+    .thinking-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .thinking-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--realie-accent-glow);
+      border-radius: 50%;
+      animation: thinking 1.4s infinite;
+    }
+
+    .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+    .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes thinking {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    .thinking-text {
+      font-size: 13px;
+      color: var(--realie-text-muted);
+    }
+
+    /* Input area */
+    .input-area {
+      padding: 20px 30px 30px;
+      border-top: 1px solid var(--realie-border);
+      background: var(--realie-bg);
+    }
+
+    .input-container {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      gap: 12px;
+    }
+
+    .input-field {
+      flex: 1;
+      background: var(--realie-bg-elevated);
+      border: 1px solid var(--realie-border);
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-family: 'Geist', sans-serif;
+      font-size: 14px;
+      color: var(--realie-text);
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .input-field:focus {
+      border-color: var(--realie-accent-glow);
+    }
+
+    .input-field::placeholder {
+      color: var(--realie-text-muted);
+    }
+
+    .send-button {
+      background: var(--realie-accent-glow);
+      border: none;
+      border-radius: 12px;
+      padding: 14px 24px;
+      font-family: 'Geist', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: #000;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .send-button:hover {
+      background: #0d9488;
+      transform: translateY(-1px);
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      gap: 30px;
+      padding: 12px 30px;
+      background: var(--realie-bg-elevated);
+      border-top: 1px solid var(--realie-border);
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stat-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      color: var(--realie-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-value {
+      font-family: 'Geist Mono', monospace;
+      font-size: 12px;
+      color: var(--realie-text);
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">Back to Showcase</a>
+
+  <header class="header">
+    <div class="header-label">ULTRAHARD 16</div>
+    <h1 class="header-title">Typewriter AI</h1>
+  </header>
+
+  <div class="chat-container" id="chatContainer">
+    <!-- Messages will be generated here -->
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat">
+      <span class="stat-label">Tokens</span>
+      <span class="stat-value" id="tokenCount">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Speed</span>
+      <span class="stat-value" id="speedValue">0 t/s</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Model</span>
+      <span class="stat-value">claude-3.5-sonnet</span>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-container">
+      <input type="text" class="input-field" placeholder="Ask anything..." disabled>
+      <button class="send-button" disabled>Send</button>
+    </div>
+  </div>
+
+  <script>
+    const chatContainer = document.getElementById('chatContainer');
+    const tokenCountEl = document.getElementById('tokenCount');
+    const speedValueEl = document.getElementById('speedValue');
+
+    let totalTokens = 0;
+    let currentSpeed = 0;
+
+    // Conversation script
+    const conversation = [
+      {
+        type: 'user',
+        name: 'You',
+        text: 'Can you help me understand how async/await works in JavaScript?'
+      },
+      {
+        type: 'ai',
+        name: 'Claude',
+        thinking: true,
+        text: `Absolutely! Let me break down async/await for you.
+
+**Async/await** is syntactic sugar built on top of Promises, making asynchronous code look and behave more like synchronous code.
+
+Here's the key concept: when you mark a function as \`async\`, it automatically returns a Promise. The \`await\` keyword can only be used inside async functions and pauses execution until the Promise resolves.`,
+        code: {
+          lang: 'javascript',
+          content: `<span class="token-keyword">async function</span> <span class="token-function">fetchUserData</span>(<span class="token-property">userId</span>) {
+  <span class="token-keyword">try</span> {
+    <span class="token-comment">// await pauses here until fetch completes</span>
+    <span class="token-keyword">const</span> response = <span class="token-keyword">await</span> <span class="token-function">fetch</span>(<span class="token-string">\`/api/users/\${userId}\`</span>);
+    <span class="token-keyword">const</span> data = <span class="token-keyword">await</span> response.<span class="token-function">json</span>();
+    <span class="token-keyword">return</span> data;
+  } <span class="token-keyword">catch</span> (error) {
+    console.<span class="token-function">error</span>(<span class="token-string">'Failed:'</span>, error);
+  }
+}`
+        },
+        followUp: `The beauty of async/await is that error handling works with regular try/catch blocks, making your code much cleaner than chaining .then() and .catch().
+
+Would you like me to show you how to run multiple async operations in parallel?`
+      }
+    ];
+
+    // Create message element
+    function createMessage(msg) {
+      const div = document.createElement('div');
+      div.className = 'message';
+
+      const avatar = msg.type === 'user' ? 'U' : 'AI';
+      const avatarClass = msg.type === 'user' ? 'user' : 'ai';
+
+      div.innerHTML = `
+        <div class="message-header">
+          <div class="message-avatar ${avatarClass}">${avatar}</div>
+          <span class="message-name">${msg.name}</span>
+          <span class="message-time">just now</span>
+        </div>
+        <div class="message-content">
+          <div class="message-text"></div>
+        </div>
+      `;
+
+      return div;
+    }
+
+    // Create thinking indicator
+    function createThinking() {
+      const div = document.createElement('div');
+      div.className = 'thinking';
+      div.innerHTML = `
+        <div class="thinking-dots">
+          <div class="thinking-dot"></div>
+          <div class="thinking-dot"></div>
+          <div class="thinking-dot"></div>
+        </div>
+        <span class="thinking-text">Thinking...</span>
+      `;
+      return div;
+    }
+
+    // Type text character by character
+    async function typeText(element, text, speed = 20) {
+      const chars = text.split('');
+      let html = '';
+
+      for (let i = 0; i < chars.length; i++) {
+        const char = chars[i];
+
+        // Handle markdown-like formatting
+        if (char === '*' && chars[i + 1] === '*') {
+          // Bold
+          const endIndex = text.indexOf('**', i + 2);
+          if (endIndex !== -1) {
+            const boldText = text.substring(i + 2, endIndex);
+            html += `<strong>${boldText}</strong>`;
+            i = endIndex + 1;
+            element.innerHTML = html + '<span class="cursor"></span>';
+            await sleep(boldText.length * speed);
+            totalTokens += boldText.length;
+            continue;
+          }
+        }
+
+        if (char === '`' && chars[i + 1] !== '`') {
+          // Inline code
+          const endIndex = text.indexOf('`', i + 1);
+          if (endIndex !== -1) {
+            const codeText = text.substring(i + 1, endIndex);
+            html += `<code style="background: rgba(20, 184, 166, 0.1); padding: 2px 6px; border-radius: 4px; font-family: 'Geist Mono', monospace;">${codeText}</code>`;
+            i = endIndex;
+            element.innerHTML = html + '<span class="cursor"></span>';
+            await sleep(codeText.length * speed);
+            totalTokens += codeText.length;
+            continue;
+          }
+        }
+
+        if (char === '\n') {
+          html += '<br>';
+        } else {
+          html += char;
+        }
+
+        element.innerHTML = html + '<span class="cursor"></span>';
+        totalTokens++;
+        updateStats();
+
+        // Variable speed for natural feel
+        const delay = char === '.' || char === '!' || char === '?' ? speed * 5 :
+                     char === ',' ? speed * 2 : speed;
+        await sleep(delay);
+      }
+
+      // Remove cursor after typing
+      element.innerHTML = html;
+    }
+
+    // Type code block
+    async function typeCodeBlock(container, code) {
+      const codeBlock = document.createElement('div');
+      codeBlock.className = 'code-block';
+      codeBlock.innerHTML = `
+        <div class="code-header">
+          <span class="code-lang">${code.lang}</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre class="code-content"></pre>
+      `;
+      container.appendChild(codeBlock);
+
+      const codeContent = codeBlock.querySelector('.code-content');
+      const lines = code.content.split('\n');
+
+      for (const line of lines) {
+        await sleep(50);
+        codeContent.innerHTML += line + '\n';
+        totalTokens += line.length / 4;
+        updateStats();
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function updateStats() {
+      tokenCountEl.textContent = Math.floor(totalTokens);
+      currentSpeed = 25 + Math.random() * 15;
+      speedValueEl.textContent = currentSpeed.toFixed(1) + ' t/s';
+    }
+
+    // Run conversation
+    async function runConversation() {
+      for (const msg of conversation) {
+        // Create message
+        const messageEl = createMessage(msg);
+        chatContainer.appendChild(messageEl);
+
+        await sleep(100);
+        messageEl.classList.add('visible');
+
+        const textContainer = messageEl.querySelector('.message-text');
+
+        // Show thinking for AI
+        if (msg.type === 'ai' && msg.thinking) {
+          const thinking = createThinking();
+          textContainer.appendChild(thinking);
+          await sleep(1500);
+          thinking.remove();
+        }
+
+        // Type main text
+        const textEl = document.createElement('div');
+        textContainer.appendChild(textEl);
+        await typeText(textEl, msg.text, 15);
+
+        // Add code block if present
+        if (msg.code) {
+          await sleep(300);
+          await typeCodeBlock(textContainer, msg.code);
+        }
+
+        // Add follow-up text
+        if (msg.followUp) {
+          await sleep(400);
+          const followUpEl = document.createElement('p');
+          followUpEl.style.marginTop = '16px';
+          textContainer.appendChild(followUpEl);
+          await typeText(followUpEl, msg.followUp, 15);
+        }
+
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        await sleep(800);
+      }
+    }
+
+    // Start after page load
+    setTimeout(runConversation, 500);
+  </script>
+</body>
+</html>

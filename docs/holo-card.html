@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Holographic Card</title>
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/style.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-mono/style.css" rel="stylesheet">
+  <style>
+    :root {
+      --realie-bg: #181b1b;
+      --realie-accent-glow: #14b8a6;
+      --realie-text: #ede9fe;
+      --realie-text-muted: #71717a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--realie-bg);
+      min-height: 100vh;
+      font-family: 'Geist', system-ui, sans-serif;
+      color: var(--realie-text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: 1500px;
+      overflow: hidden;
+    }
+
+    .back-link {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      color: var(--realie-text-muted);
+      text-decoration: none;
+      z-index: 100;
+      padding: 8px 16px;
+      border: 1px solid rgba(237, 233, 254, 0.1);
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .back-link:hover {
+      color: var(--realie-accent-glow);
+      border-color: var(--realie-accent-glow);
+    }
+
+    .ui {
+      position: fixed;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .ui-top {
+      top: 30px;
+      left: 30px;
+    }
+
+    .ui-bottom {
+      bottom: 30px;
+      left: 30px;
+      right: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--realie-text-muted);
+      margin-bottom: 8px;
+    }
+
+    .title {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--realie-accent-glow);
+    }
+
+    .hint {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      color: var(--realie-text-muted);
+      text-align: right;
+      line-height: 1.6;
+    }
+
+    .tilt-display {
+      display: flex;
+      gap: 30px;
+    }
+
+    .tilt-item {
+      text-align: left;
+    }
+
+    .tilt-value {
+      font-family: 'Geist Mono', monospace;
+      font-size: 32px;
+      font-weight: 300;
+      color: var(--realie-text);
+      opacity: 0.4;
+    }
+
+    /* Card container */
+    .card-container {
+      position: relative;
+      width: 380px;
+      height: 540px;
+      transform-style: preserve-3d;
+      transition: transform 0.1s ease-out;
+    }
+
+    /* Main card */
+    .card {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #1e2222 0%, #2a2f2f 100%);
+      border-radius: 24px;
+      overflow: hidden;
+      transform-style: preserve-3d;
+      box-shadow:
+        0 40px 80px -20px rgba(0, 0, 0, 0.5),
+        0 0 1px rgba(237, 233, 254, 0.1);
+    }
+
+    /* Holographic overlay */
+    .holo-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        125deg,
+        transparent 0%,
+        rgba(255, 0, 128, 0.1) 20%,
+        rgba(0, 255, 255, 0.1) 40%,
+        rgba(128, 0, 255, 0.1) 60%,
+        rgba(255, 255, 0, 0.1) 80%,
+        transparent 100%
+      );
+      background-size: 400% 400%;
+      mix-blend-mode: overlay;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .card:hover .holo-overlay {
+      opacity: 1;
+      animation: holoShift 3s ease infinite;
+    }
+
+    @keyframes holoShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    /* Shine effect */
+    .shine {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        circle at var(--shine-x, 50%) var(--shine-y, 50%),
+        rgba(255, 255, 255, 0.15) 0%,
+        transparent 60%
+      );
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .card:hover .shine {
+      opacity: 1;
+    }
+
+    /* Grid pattern */
+    .grid-pattern {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(237, 233, 254, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(237, 233, 254, 0.02) 1px, transparent 1px);
+      background-size: 20px 20px;
+      pointer-events: none;
+    }
+
+    /* Card content */
+    .card-content {
+      position: relative;
+      height: 100%;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      transform-style: preserve-3d;
+    }
+
+    /* Parallax layers */
+    .layer-back {
+      transform: translateZ(0px);
+    }
+
+    .layer-mid {
+      transform: translateZ(30px);
+    }
+
+    .layer-front {
+      transform: translateZ(60px);
+    }
+
+    /* Card header */
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 60px;
+    }
+
+    .card-logo {
+      font-family: 'Geist', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--realie-accent-glow);
+    }
+
+    .card-chip {
+      width: 50px;
+      height: 40px;
+      background: linear-gradient(135deg, #c9a227 0%, #f0d87a 50%, #c9a227 100%);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-chip::before {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      background: linear-gradient(135deg, #f0d87a 0%, #c9a227 100%);
+      border-radius: 4px;
+    }
+
+    .card-chip::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 4px;
+      right: 4px;
+      height: 1px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    /* Card number */
+    .card-number {
+      font-family: 'Geist Mono', monospace;
+      font-size: 26px;
+      letter-spacing: 0.15em;
+      color: var(--realie-text);
+      margin-bottom: 40px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-number span {
+      display: inline-block;
+      margin-right: 20px;
+    }
+
+    /* Card details */
+    .card-details {
+      display: flex;
+      gap: 60px;
+      margin-top: auto;
+    }
+
+    .card-detail {
+      flex: 1;
+    }
+
+    .detail-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--realie-text-muted);
+      margin-bottom: 6px;
+    }
+
+    .detail-value {
+      font-family: 'Geist Mono', monospace;
+      font-size: 16px;
+      color: var(--realie-text);
+      letter-spacing: 0.05em;
+    }
+
+    /* Network logo */
+    .card-network {
+      position: absolute;
+      bottom: 40px;
+      right: 40px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .network-circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      opacity: 0.8;
+    }
+
+    .network-circle:first-child {
+      background: #eb001b;
+    }
+
+    .network-circle:last-child {
+      background: #f79e1b;
+      margin-left: -20px;
+      mix-blend-mode: multiply;
+    }
+
+    /* Border glow */
+    .border-glow {
+      position: absolute;
+      inset: -2px;
+      background: linear-gradient(
+        135deg,
+        transparent 0%,
+        var(--realie-accent-glow) 50%,
+        transparent 100%
+      );
+      border-radius: 26px;
+      opacity: 0;
+      z-index: -1;
+      transition: opacity 0.3s ease;
+      filter: blur(10px);
+    }
+
+    .card-container:hover .border-glow {
+      opacity: 0.5;
+    }
+
+    /* Floating particles */
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: var(--realie-accent-glow);
+      border-radius: 50%;
+      opacity: 0.3;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">Back to Showcase</a>
+
+  <div class="ui ui-top">
+    <div class="label">ULTRAHARD 12</div>
+    <div class="title">Holographic Card</div>
+  </div>
+
+  <div class="ui ui-bottom">
+    <div class="tilt-display">
+      <div class="tilt-item">
+        <div class="tilt-value" id="tiltX">0°</div>
+        <div class="label">Tilt X</div>
+      </div>
+      <div class="tilt-item">
+        <div class="tilt-value" id="tiltY">0°</div>
+        <div class="label">Tilt Y</div>
+      </div>
+    </div>
+    <div class="hint">
+      Move mouse to tilt<br>
+      Holographic shimmer on hover
+    </div>
+  </div>
+
+  <div class="card-container" id="cardContainer">
+    <div class="border-glow"></div>
+    <div class="card" id="card">
+      <div class="grid-pattern"></div>
+      <div class="holo-overlay"></div>
+      <div class="shine" id="shine"></div>
+
+      <div class="card-content">
+        <div class="card-header layer-front">
+          <div class="card-logo">KINETIC</div>
+          <div class="card-chip"></div>
+        </div>
+
+        <div class="card-number layer-mid">
+          <span>4242</span>
+          <span>4242</span>
+          <span>4242</span>
+          <span>4242</span>
+        </div>
+
+        <div class="card-details layer-front">
+          <div class="card-detail">
+            <div class="detail-label">Card Holder</div>
+            <div class="detail-value">JANE DOE</div>
+          </div>
+          <div class="card-detail">
+            <div class="detail-label">Expires</div>
+            <div class="detail-value">12/28</div>
+          </div>
+        </div>
+
+        <div class="card-network layer-back">
+          <div class="network-circle"></div>
+          <div class="network-circle"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating particles -->
+  <div class="particle" style="top: 20%; left: 15%;"></div>
+  <div class="particle" style="top: 30%; right: 20%;"></div>
+  <div class="particle" style="bottom: 25%; left: 25%;"></div>
+  <div class="particle" style="bottom: 35%; right: 15%;"></div>
+
+  <script>
+    const container = document.getElementById('cardContainer');
+    const card = document.getElementById('card');
+    const shine = document.getElementById('shine');
+    const tiltXEl = document.getElementById('tiltX');
+    const tiltYEl = document.getElementById('tiltY');
+    const particles = document.querySelectorAll('.particle');
+
+    let mouseX = 0;
+    let mouseY = 0;
+    let currentX = 0;
+    let currentY = 0;
+
+    // Mouse tracking
+    document.addEventListener('mousemove', (e) => {
+      const rect = container.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      // Calculate distance from card center
+      mouseX = (e.clientX - centerX) / (window.innerWidth / 2);
+      mouseY = (e.clientY - centerY) / (window.innerHeight / 2);
+
+      // Update shine position
+      const shineX = ((e.clientX - rect.left) / rect.width) * 100;
+      const shineY = ((e.clientY - rect.top) / rect.height) * 100;
+      shine.style.setProperty('--shine-x', shineX + '%');
+      shine.style.setProperty('--shine-y', shineY + '%');
+    });
+
+    // Animation loop for smooth tilt
+    function animate() {
+      // Ease toward target
+      currentX += (mouseX - currentX) * 0.08;
+      currentY += (mouseY - currentY) * 0.08;
+
+      // Calculate rotation (limited range)
+      const rotateY = currentX * 25;
+      const rotateX = -currentY * 25;
+
+      // Apply transforms
+      container.style.transform = `
+        rotateX(${rotateX}deg)
+        rotateY(${rotateY}deg)
+      `;
+
+      // Dynamic shadow
+      const shadowX = currentX * 30;
+      const shadowY = currentY * 30;
+      card.style.boxShadow = `
+        ${shadowX}px ${40 + shadowY}px 80px -20px rgba(0, 0, 0, 0.5),
+        0 0 1px rgba(237, 233, 254, 0.1)
+      `;
+
+      // Update display values
+      tiltXEl.textContent = rotateX.toFixed(1) + '°';
+      tiltYEl.textContent = rotateY.toFixed(1) + '°';
+
+      // Animate particles
+      const time = Date.now() * 0.001;
+      particles.forEach((p, i) => {
+        const offsetX = Math.sin(time + i * 1.5) * 20;
+        const offsetY = Math.cos(time * 0.8 + i * 2) * 15;
+        p.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+        p.style.opacity = 0.2 + Math.sin(time + i) * 0.15;
+      });
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    // Reset on mouse leave
+    document.addEventListener('mouseleave', () => {
+      mouseX = 0;
+      mouseY = 0;
+    });
+  </script>
+</body>
+</html>

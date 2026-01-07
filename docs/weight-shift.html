@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weight Shift</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: #0a0a0a;
+      font-family: 'Inter', sans-serif;
+      color: #fafafa;
+      min-height: 400vh;
+    }
+
+    .fixed-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .word {
+      font-size: clamp(40px, 12vw, 160px);
+      letter-spacing: -0.03em;
+      line-height: 1;
+      text-align: center;
+    }
+
+    .char {
+      display: inline-block;
+      font-weight: 100;
+      transition: font-weight 0.05s ease-out, transform 0.15s ease-out;
+    }
+
+    .ui {
+      position: fixed;
+      bottom: 30px;
+      left: 30px;
+      font-family: 'Courier New', monospace;
+      z-index: 10;
+    }
+
+    .label {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #333;
+      margin-bottom: 4px;
+    }
+
+    .value {
+      font-size: 11px;
+      color: #555;
+    }
+
+    .hint {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: #333;
+      text-align: right;
+      font-family: 'Courier New', monospace;
+    }
+
+    .progress {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 3px;
+      height: 100%;
+      background: #111;
+      z-index: 100;
+    }
+
+    .progress-fill {
+      width: 100%;
+      background: linear-gradient(180deg, #333 0%, #666 100%);
+      transform-origin: top;
+      transform: scaleY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="progress">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <div class="fixed-container">
+    <div class="word" id="word">INTENSITY</div>
+  </div>
+
+  <div class="ui">
+    <div class="label">Weight</div>
+    <div class="value" id="weightValue">100</div>
+  </div>
+
+  <div class="hint">
+    Scroll to shift weight<br>
+    Move cursor to distort
+  </div>
+
+  <script>
+    const word = document.getElementById('word');
+    const weightValue = document.getElementById('weightValue');
+    const progressFill = document.getElementById('progressFill');
+
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+
+    // Split into characters
+    const text = word.textContent;
+    word.innerHTML = text.split('').map((char, i) =>
+      `<span class="char" data-index="${i}">${char}</span>`
+    ).join('');
+
+    const chars = document.querySelectorAll('.char');
+
+    // Mouse tracking
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    function animate() {
+      const scrollTop = window.scrollY;
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollProgress = scrollTop / maxScroll;
+
+      // Update progress bar
+      progressFill.style.transform = `scaleY(${scrollProgress})`;
+
+      // Base weight from scroll (100 to 900)
+      const baseWeight = Math.round(100 + scrollProgress * 800);
+
+      chars.forEach((char, i) => {
+        const rect = char.getBoundingClientRect();
+        const charCenterX = rect.left + rect.width / 2;
+        const charCenterY = rect.top + rect.height / 2;
+
+        // Distance from mouse
+        const dx = mouseX - charCenterX;
+        const dy = mouseY - charCenterY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        // Weight variation based on mouse proximity
+        const maxDist = 300;
+        let weightMod = 0;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if (dist < maxDist) {
+          const influence = 1 - dist / maxDist;
+          // Heavier when mouse is near
+          weightMod = influence * 300;
+          // Subtle push away
+          offsetX = -dx * influence * 0.08;
+          offsetY = -dy * influence * 0.05;
+        }
+
+        // Apply weight (clamped to valid values)
+        const finalWeight = Math.min(900, Math.max(100, Math.round((baseWeight + weightMod) / 100) * 100));
+        char.style.fontWeight = finalWeight;
+        char.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+      });
+
+      // Update UI
+      weightValue.textContent = baseWeight;
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

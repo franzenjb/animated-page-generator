@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero Takeover</title>
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/style.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-mono/style.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    :root {
+      --realie-bg: #181b1b;
+      --realie-accent-glow: #14b8a6;
+      --realie-text: #ede9fe;
+      --realie-text-muted: #71717a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--realie-bg);
+      font-family: 'Geist', system-ui, sans-serif;
+      color: var(--realie-text);
+      overflow-x: hidden;
+    }
+
+    .back-link {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      color: var(--realie-text-muted);
+      text-decoration: none;
+      z-index: 100;
+      padding: 8px 16px;
+      border: 1px solid rgba(237, 233, 254, 0.1);
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .back-link:hover {
+      color: var(--realie-accent-glow);
+      border-color: var(--realie-accent-glow);
+    }
+
+    /* Progress indicator */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 2px;
+      background: var(--realie-accent-glow);
+      width: 0%;
+      z-index: 1000;
+      box-shadow: 0 0 10px var(--realie-accent-glow);
+    }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 30px;
+      left: 30px;
+      z-index: 100;
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    .header-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--realie-accent-glow);
+    }
+
+    /* Hero section - pinned */
+    .hero-container {
+      height: 400vh;
+      position: relative;
+    }
+
+    .hero {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Background layers */
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bg-gradient {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(20, 184, 166, 0.1) 0%, transparent 60%);
+      opacity: 0;
+    }
+
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(237, 233, 254, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(237, 233, 254, 0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0;
+    }
+
+    /* Floating orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0;
+    }
+
+    .orb-1 {
+      width: 400px;
+      height: 400px;
+      background: rgba(20, 184, 166, 0.3);
+      top: 20%;
+      left: 10%;
+    }
+
+    .orb-2 {
+      width: 300px;
+      height: 300px;
+      background: rgba(139, 92, 246, 0.2);
+      bottom: 20%;
+      right: 15%;
+    }
+
+    .orb-3 {
+      width: 200px;
+      height: 200px;
+      background: rgba(251, 191, 36, 0.15);
+      top: 60%;
+      left: 60%;
+    }
+
+    /* Text content */
+    .hero-content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      max-width: 1000px;
+      padding: 0 40px;
+    }
+
+    .hero-eyebrow {
+      font-family: 'Geist Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--realie-accent-glow);
+      margin-bottom: 24px;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .hero-title {
+      font-size: clamp(48px, 12vw, 140px);
+      font-weight: 300;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      margin-bottom: 32px;
+    }
+
+    .hero-title .word {
+      display: inline-block;
+      overflow: hidden;
+      vertical-align: top;
+    }
+
+    .hero-title .word span {
+      display: inline-block;
+      transform: translateY(100%);
+    }
+
+    .hero-subtitle {
+      font-size: 18px;
+      color: var(--realie-text-muted);
+      max-width: 600px;
+      margin: 0 auto 48px;
+      line-height: 1.6;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--realie-accent-glow);
+      color: #000;
+      font-weight: 500;
+      padding: 16px 32px;
+      border-radius: 12px;
+      text-decoration: none;
+      opacity: 0;
+      transform: translateY(20px) scale(0.9);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .hero-cta:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 20px 40px -10px rgba(20, 184, 166, 0.4);
+    }
+
+    .hero-cta svg {
+      width: 20px;
+      height: 20px;
+      transition: transform 0.3s ease;
+    }
+
+    .hero-cta:hover svg {
+      transform: translateX(4px);
+    }
+
+    /* Scroll indicator */
+    .scroll-indicator {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+    }
+
+    .scroll-text {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--realie-text-muted);
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--realie-accent-glow), transparent);
+      animation: scrollPulse 2s infinite;
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; transform: scaleY(0.8); }
+      50% { opacity: 1; transform: scaleY(1); }
+    }
+
+    /* Stats section after hero */
+    .stats-section {
+      position: relative;
+      z-index: 20;
+      background: var(--realie-bg);
+      padding: 120px 40px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .stat-item {
+      text-align: center;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .stat-value {
+      font-family: 'Geist Mono', monospace;
+      font-size: 64px;
+      font-weight: 300;
+      color: var(--realie-text);
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--realie-text-muted);
+    }
+
+    /* Feature cards */
+    .features-section {
+      padding: 120px 40px;
+      background: linear-gradient(to bottom, var(--realie-bg), #1a1d1d);
+    }
+
+    .features-header {
+      text-align: center;
+      margin-bottom: 80px;
+    }
+
+    .features-title {
+      font-size: 48px;
+      font-weight: 300;
+      margin-bottom: 16px;
+    }
+
+    .features-subtitle {
+      font-size: 16px;
+      color: var(--realie-text-muted);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .feature-card {
+      background: rgba(30, 34, 34, 0.5);
+      border: 1px solid rgba(237, 233, 254, 0.06);
+      border-radius: 16px;
+      padding: 32px;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--realie-accent-glow);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    .feature-title {
+      font-size: 20px;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+
+    .feature-desc {
+      font-size: 14px;
+      color: var(--realie-text-muted);
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1024px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">Back to Showcase</a>
+
+  <div class="progress-bar" id="progressBar"></div>
+
+  <div class="header" id="header">
+    <div class="header-label">ULTRAHARD 18 • Hero Takeover</div>
+  </div>
+
+  <div class="hero-container">
+    <section class="hero" id="hero">
+      <!-- Background layers -->
+      <div class="bg-layer">
+        <div class="bg-gradient" id="bgGradient"></div>
+        <div class="bg-grid" id="bgGrid"></div>
+        <div class="orb orb-1" id="orb1"></div>
+        <div class="orb orb-2" id="orb2"></div>
+        <div class="orb orb-3" id="orb3"></div>
+      </div>
+
+      <!-- Content -->
+      <div class="hero-content">
+        <div class="hero-eyebrow" id="eyebrow">Introducing the Future</div>
+
+        <h1 class="hero-title" id="heroTitle">
+          <span class="word"><span>Design</span></span>
+          <span class="word"><span>Without</span></span>
+          <span class="word"><span>Limits</span></span>
+        </h1>
+
+        <p class="hero-subtitle" id="subtitle">
+          Experience the next generation of creative tools. Build stunning interfaces with unprecedented control and precision.
+        </p>
+
+        <a href="#" class="hero-cta" id="cta">
+          Get Started
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+
+      <div class="scroll-indicator" id="scrollIndicator">
+        <span class="scroll-text">Scroll to explore</span>
+        <div class="scroll-line"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Stats section -->
+  <section class="stats-section">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-value" data-target="99.9">0</div>
+        <div class="stat-label">Uptime SLA</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" data-target="50" data-suffix="M+">0</div>
+        <div class="stat-label">Users Worldwide</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" data-target="2.5" data-suffix="B">0</div>
+        <div class="stat-label">API Calls Daily</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" data-target="150" data-suffix="+">0</div>
+        <div class="stat-label">Enterprise Clients</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features section -->
+  <section class="features-section">
+    <div class="features-header">
+      <h2 class="features-title">Built for Scale</h2>
+      <p class="features-subtitle">Everything you need to build world-class applications</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3 class="feature-title">Lightning Fast</h3>
+        <p class="feature-desc">Sub-millisecond response times with our globally distributed edge network.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3 class="feature-title">Enterprise Security</h3>
+        <p class="feature-desc">SOC 2 Type II certified with end-to-end encryption and zero-trust architecture.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <h3 class="feature-title">Real-time Sync</h3>
+        <p class="feature-desc">Collaborative editing with conflict-free replicated data types (CRDTs).</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3 class="feature-title">Advanced Analytics</h3>
+        <p class="feature-desc">Deep insights with AI-powered recommendations and predictive modeling.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎨</div>
+        <h3 class="feature-title">Design System</h3>
+        <p class="feature-desc">Consistent, accessible components with automatic dark mode support.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌐</div>
+        <h3 class="feature-title">Global CDN</h3>
+        <p class="feature-desc">200+ edge locations ensuring optimal performance worldwide.</p>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    const progressBar = document.getElementById('progressBar');
+    const header = document.getElementById('header');
+    const bgGradient = document.getElementById('bgGradient');
+    const bgGrid = document.getElementById('bgGrid');
+    const orbs = [document.getElementById('orb1'), document.getElementById('orb2'), document.getElementById('orb3')];
+    const eyebrow = document.getElementById('eyebrow');
+    const heroTitle = document.getElementById('heroTitle');
+    const subtitle = document.getElementById('subtitle');
+    const cta = document.getElementById('cta');
+    const scrollIndicator = document.getElementById('scrollIndicator');
+    const words = heroTitle.querySelectorAll('.word span');
+
+    // Main scroll-locked hero animation
+    const heroTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: '.hero-container',
+        start: 'top top',
+        end: 'bottom bottom',
+        scrub: 1,
+        pin: false,
+        onUpdate: (self) => {
+          progressBar.style.width = (self.progress * 100) + '%';
+        }
+      }
+    });
+
+    // Background animations
+    heroTl
+      .to(bgGradient, { opacity: 1, duration: 0.3 }, 0)
+      .to(bgGrid, { opacity: 1, duration: 0.3 }, 0.1)
+      .to(orbs, { opacity: 0.6, stagger: 0.1, duration: 0.3 }, 0.2);
+
+    // Orb parallax movement
+    orbs.forEach((orb, i) => {
+      heroTl.to(orb, {
+        y: -100 * (i + 1),
+        x: (i % 2 === 0 ? 1 : -1) * 50,
+        duration: 1
+      }, 0);
+    });
+
+    // Text reveal sequence
+    heroTl
+      .to(eyebrow, { opacity: 1, y: 0, duration: 0.2 }, 0.3)
+      .to(words, { y: 0, stagger: 0.05, duration: 0.3, ease: 'power2.out' }, 0.4)
+      .to(subtitle, { opacity: 1, y: 0, duration: 0.2 }, 0.6)
+      .to(cta, { opacity: 1, y: 0, scale: 1, duration: 0.2 }, 0.7)
+      .to(scrollIndicator, { opacity: 1, duration: 0.2 }, 0.8)
+      .to(header, { opacity: 1, y: 0, duration: 0.2 }, 0.3);
+
+    // Color shift on deep scroll
+    heroTl.to('.hero', {
+      backgroundColor: '#0d1212',
+      duration: 0.5
+    }, 0.5);
+
+    // Stats animation on scroll into view
+    ScrollTrigger.create({
+      trigger: '.stats-section',
+      start: 'top 80%',
+      onEnter: () => {
+        // Animate stat items
+        gsap.to('.stat-item', {
+          opacity: 1,
+          y: 0,
+          stagger: 0.1,
+          duration: 0.6,
+          ease: 'power2.out'
+        });
+
+        // Animate stat values
+        document.querySelectorAll('.stat-value[data-target]').forEach(el => {
+          const target = parseFloat(el.dataset.target);
+          const suffix = el.dataset.suffix || '';
+          const isDecimal = target % 1 !== 0;
+
+          gsap.to({ val: 0 }, {
+            val: target,
+            duration: 2,
+            ease: 'power2.out',
+            onUpdate: function() {
+              const val = this.targets()[0].val;
+              const formatted = isDecimal ? val.toFixed(1) : Math.round(val);
+              el.textContent = formatted + suffix;
+            }
+          });
+        });
+      },
+      once: true
+    });
+
+    // Feature cards animation
+    ScrollTrigger.create({
+      trigger: '.features-section',
+      start: 'top 70%',
+      onEnter: () => {
+        gsap.to('.feature-card', {
+          opacity: 1,
+          y: 0,
+          stagger: 0.1,
+          duration: 0.6,
+          ease: 'power2.out'
+        });
+      },
+      once: true
+    });
+
+    // Mouse parallax on hero
+    document.addEventListener('mousemove', (e) => {
+      const xPercent = (e.clientX / window.innerWidth - 0.5) * 2;
+      const yPercent = (e.clientY / window.innerHeight - 0.5) * 2;
+
+      gsap.to(orbs[0], { x: xPercent * 30, y: yPercent * 30, duration: 0.5 });
+      gsap.to(orbs[1], { x: xPercent * -20, y: yPercent * -20, duration: 0.5 });
+      gsap.to(orbs[2], { x: xPercent * 15, y: yPercent * 15, duration: 0.5 });
+    });
+  </script>
+</body>
+</html>

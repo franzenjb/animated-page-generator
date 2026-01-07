@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KINETIC.LAB Showcase</title>
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/style.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-mono/style.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <style>
+    :root {
+      --realie-bg: #181b1b;
+      --realie-bg-elevated: #1e2222;
+      --realie-accent: #0d4a47;
+      --realie-accent-glow: #14b8a6;
+      --realie-text: #ede9fe;
+      --realie-text-muted: #71717a;
+      --realie-border: rgba(237, 233, 254, 0.06);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--realie-bg);
+      min-height: 100vh;
+      font-family: 'Geist', system-ui, sans-serif;
+      color: var(--realie-text);
+      overflow-x: hidden;
+    }
+
+    /* Menu Trigger */
+    .menu-trigger {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 44px;
+      height: 44px;
+      background: var(--realie-bg-elevated);
+      border: 1px solid var(--realie-border);
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+
+    .menu-trigger:hover {
+      background: var(--realie-accent);
+      border-color: var(--realie-accent-glow);
+    }
+
+    .menu-trigger span {
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: var(--realie-text);
+      border-radius: 1px;
+      transition: all 0.3s ease;
+    }
+
+    .menu-trigger.active span:nth-child(1) {
+      transform: rotate(45deg) translate(5px, 5px);
+    }
+
+    .menu-trigger.active span:nth-child(2) {
+      opacity: 0;
+    }
+
+    .menu-trigger.active span:nth-child(3) {
+      transform: rotate(-45deg) translate(5px, -5px);
+    }
+
+    /* Menu Backdrop */
+    .menu-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 998;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .menu-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Menu Panel */
+    .menu-panel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 320px;
+      height: 100vh;
+      background: var(--realie-bg);
+      border-right: 1px solid var(--realie-border);
+      z-index: 999;
+      transform: translateX(-100%);
+      overflow-y: auto;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .menu-panel.active {
+      transform: translateX(0);
+    }
+
+    .menu-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--realie-border);
+    }
+
+    .menu-logo {
+      font-family: 'Geist Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--realie-accent-glow);
+    }
+
+    .menu-logo span {
+      color: var(--realie-text-muted);
+    }
+
+    .menu-content {
+      padding: 16px 0;
+    }
+
+    .menu-category {
+      padding: 0 24px;
+      margin-bottom: 8px;
+    }
+
+    .menu-category-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--realie-text-muted);
+      padding: 16px 0 8px;
+    }
+
+    .menu-divider {
+      height: 1px;
+      background: linear-gradient(90deg, var(--realie-accent) 0%, transparent 100%);
+      margin: 16px 24px;
+    }
+
+    .menu-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 24px;
+      text-decoration: none;
+      color: var(--realie-text);
+      transition: all 0.2s ease;
+      position: relative;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .menu-link::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--realie-accent-glow);
+      transform: scaleY(0);
+      transition: transform 0.2s ease;
+    }
+
+    .menu-link:hover {
+      background: var(--realie-bg-elevated);
+    }
+
+    .menu-link:hover::before {
+      transform: scaleY(1);
+    }
+
+    .menu-link.active {
+      background: var(--realie-bg-elevated);
+    }
+
+    .menu-link.active::before {
+      transform: scaleY(1);
+    }
+
+    .menu-num {
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      color: var(--realie-text-muted);
+      min-width: 24px;
+    }
+
+    .menu-title {
+      font-size: 14px;
+      font-weight: 400;
+    }
+
+    .menu-tag {
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--realie-accent);
+      color: var(--realie-accent-glow);
+      margin-left: auto;
+    }
+
+    .menu-footer {
+      padding: 24px;
+      border-top: 1px solid var(--realie-border);
+      margin-top: auto;
+    }
+
+    .menu-cta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, var(--realie-accent) 0%, #0a3533 100%);
+      border: 1px solid var(--realie-accent-glow);
+      border-radius: 8px;
+      color: var(--realie-text);
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .menu-cta:hover {
+      background: var(--realie-accent-glow);
+      color: var(--realie-bg);
+    }
+
+    /* Main Content */
+    .main {
+      padding: 80px 40px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      margin-bottom: 60px;
+    }
+
+    .hero-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--realie-accent-glow);
+      margin-bottom: 16px;
+    }
+
+    .hero-title {
+      font-size: clamp(32px, 6vw, 48px);
+      font-weight: 300;
+      line-height: 1.2;
+      margin-bottom: 20px;
+    }
+
+    .hero-title strong {
+      font-weight: 600;
+      color: var(--realie-accent-glow);
+    }
+
+    .hero-desc {
+      font-size: 16px;
+      color: var(--realie-text-muted);
+      line-height: 1.7;
+      max-width: 500px;
+    }
+
+    /* Grid */
+    .showcase-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .showcase-card {
+      display: block;
+      background: var(--realie-bg-elevated);
+      border: 1px solid var(--realie-border);
+      border-radius: 12px;
+      padding: 24px;
+      text-decoration: none;
+      color: var(--realie-text);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .showcase-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--realie-accent) 0%, transparent 50%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .showcase-card:hover {
+      border-color: var(--realie-accent-glow);
+      transform: translateY(-4px);
+    }
+
+    .showcase-card:hover::before {
+      opacity: 0.1;
+    }
+
+    .showcase-card-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .showcase-num {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      color: var(--realie-text-muted);
+      margin-bottom: 12px;
+    }
+
+    .showcase-title {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .showcase-desc {
+      font-size: 13px;
+      color: var(--realie-text-muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .showcase-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .showcase-tag {
+      font-size: 10px;
+      padding: 4px 8px;
+      background: rgba(20, 184, 166, 0.1);
+      color: var(--realie-accent-glow);
+      border-radius: 4px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--realie-text-muted);
+      margin: 40px 0 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--realie-border);
+    }
+
+    @media (max-width: 768px) {
+      .menu-panel {
+        width: 100%;
+      }
+      .main {
+        padding: 100px 20px 40px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Menu Trigger -->
+  <button class="menu-trigger" id="menuTrigger">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <!-- Menu Backdrop -->
+  <div class="menu-backdrop" id="menuBackdrop"></div>
+
+  <!-- Menu Panel -->
+  <nav class="menu-panel" id="menuPanel">
+    <div class="menu-header">
+      <div class="menu-logo">KINETIC<span>.LAB</span></div>
+    </div>
+
+    <div class="menu-content">
+      <div class="menu-category">
+        <div class="menu-category-label">Typography & Interaction</div>
+      </div>
+      <a href="scroll-reveal.html" class="menu-link"><span class="menu-num">01</span><span class="menu-title">Scroll Reveal</span></a>
+      <a href="particle-text.html" class="menu-link"><span class="menu-num">02</span><span class="menu-title">Particle Text</span></a>
+      <a href="weight-shift.html" class="menu-link"><span class="menu-num">03</span><span class="menu-title">Weight Shift</span></a>
+
+      <div class="menu-divider"></div>
+
+      <div class="menu-category">
+        <div class="menu-category-label">Image & Visual</div>
+      </div>
+      <a href="image-dissolve.html" class="menu-link"><span class="menu-num">04</span><span class="menu-title">Image Dissolve</span></a>
+      <a href="cinematic-hero.html" class="menu-link"><span class="menu-num">05</span><span class="menu-title">Cinematic Hero</span></a>
+
+      <div class="menu-divider"></div>
+
+      <div class="menu-category">
+        <div class="menu-category-label">Content & Editorial</div>
+      </div>
+      <a href="editorial-scroll.html" class="menu-link"><span class="menu-num">06</span><span class="menu-title">Editorial Scroll</span></a>
+      <a href="portfolio-grid.html" class="menu-link"><span class="menu-num">07</span><span class="menu-title">Portfolio Grid</span></a>
+      <a href="data-story.html" class="menu-link"><span class="menu-num">08</span><span class="menu-title">Data Story</span></a>
+
+      <div class="menu-divider"></div>
+
+      <div class="menu-category">
+        <div class="menu-category-label">ULTRAHARD Series</div>
+      </div>
+      <a href="shader-morph.html" class="menu-link"><span class="menu-num">09</span><span class="menu-title">Shader Morph</span><span class="menu-tag">WebGL</span></a>
+      <a href="liquid-type.html" class="menu-link"><span class="menu-num">10</span><span class="menu-title">Liquid Typography</span><span class="menu-tag">SVG</span></a>
+      <a href="neural-network.html" class="menu-link"><span class="menu-num">11</span><span class="menu-title">Neural Network</span><span class="menu-tag">Canvas</span></a>
+      <a href="holo-card.html" class="menu-link"><span class="menu-num">12</span><span class="menu-title">Holographic Card</span><span class="menu-tag">3D</span></a>
+      <a href="infinite-machine.html" class="menu-link"><span class="menu-num">13</span><span class="menu-title">Infinite Machine</span><span class="menu-tag">Scroll</span></a>
+      <a href="bento-dashboard.html" class="menu-link"><span class="menu-num">14</span><span class="menu-title">Bento Dashboard</span><span class="menu-tag">Grid</span></a>
+      <a href="glass-refraction.html" class="menu-link"><span class="menu-num">15</span><span class="menu-title">Glass Refraction</span><span class="menu-tag">Blur</span></a>
+      <a href="typewriter-ai.html" class="menu-link"><span class="menu-num">16</span><span class="menu-title">Typewriter AI</span><span class="menu-tag">Text</span></a>
+      <a href="data-pulse.html" class="menu-link"><span class="menu-num">17</span><span class="menu-title">Data Pulse</span><span class="menu-tag">Charts</span></a>
+      <a href="hero-takeover.html" class="menu-link"><span class="menu-num">18</span><span class="menu-title">Hero Takeover</span><span class="menu-tag">Pin</span></a>
+    </div>
+
+    <div class="menu-footer">
+      <a href="../" class="menu-cta">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        Generate New
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main">
+    <div class="hero">
+      <div class="hero-label">Showcase Gallery</div>
+      <h1 class="hero-title">Explore <strong>18 animations</strong> built with cutting-edge techniques</h1>
+      <p class="hero-desc">Each example demonstrates different interaction patterns, from WebGL shaders to scroll-driven reveals. Click the menu to navigate.</p>
+    </div>
+
+    <div class="section-label">ULTRAHARD Series — Realie.ai Inspired</div>
+    <div class="showcase-grid">
+      <a href="shader-morph.html" class="showcase-card">
+        <div class="showcase-card-content">
+          <div class="showcase-num">09</div>
+          <h3 class="showcase-title">Shader Morph</h3>
+          <p class="showcase-desc">WebGL fragment shaders with mouse-driven image distortion and ripple effects.</p>
+          <div class="showcase-tags">
+            <span class="showcase-tag">WebGL</span>
+            <span class="showcase-tag">GLSL</span>
+            <span class="showcase-tag">Mouse</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="liquid-type.html" class="showcase-card">
+        <div class="showcase-card-content">
+          <div class="showcase-num">10</div>
+          <h3 class="showcase-title">Liquid Typography</h3>
+          <p class="showcase-desc">SVG text morphing with turbulence filter controlled by scroll position.</p>
+          <div class="showcase-tags">
+            <span class="showcase-tag">SVG</span>
+            <span class="showcase-tag">Filter</span>
+            <span class="showcase-tag">Scroll</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="neural-network.html" class="showcase-card">
+        <div class="showcase-card-content">
+          <div class="showcase-num">11</div>
+          <h3 class="showcase-title">Neural Network</h3>
+          <p class="showcase-desc">200+ animated nodes with spring physics and mouse-proximity connections.</p>
+          <div class="showcase-tags">
+            <span class="showcase-tag">Canvas</span>
+            <span class="showcase-tag">Physics</span>
+            <span class="showcase-tag">Interactive</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="holo-card.html" class="showcase-card">
+        <div class="showcase-card-content">
+          <div class="showcase-num">12</div>
+          <h3 class="showcase-title">Holographic Card</h3>
+          <p class="showcase-desc">3D CSS transforms with rainbow sheen and parallax depth layers.</p>
+          <div class="showcase-tags">
+            <span class="showcase-tag">3D CSS</span>
+            <span class="showcase-tag">Tilt</span>
+            <span class="showcase-tag">Shine</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="infinite-machine.html" class="showcase-card">
+        <div class="showcase-card-content">
+          <div class="showcase-num">13</div>
+          <h3 class="showcase-title">Infinite Machine</h3>
+          <p class="showcase-desc">Mechanical gears animated by scroll velocity with direction control.</p>
+          <div class="showcase-tags">
+            <span class="showcase-tag">SVG</span>
+            <span class="showcase-tag">Scroll</span>
+            <span class="showcase-tag">Velocity</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="bento-dashboard.html" class="showcase-card">
+        <div class="showcase-card-content">
+          <div class="showcase-num">14</div>
+          <h3 class="showcase-title">Bento Dashboard</h3>
+          <p class="showcase-desc">Asymmetric grid with skeleton loading and staggered content reveals.</p>
+          <div class="showcase-tags">
+            <span class="showcase-tag">Grid</span>
+            <span class="showcase-tag">Skeleton</span>
+            <span class="showcase-tag">Stagger</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="glass-refraction.html" class="showcase-card">
+        <div class="showcase-card-content">
+          <div class="showcase-num">15</div>
+          <h3 class="showcase-title">Glass Refraction</h3>
+          <p class="showcase-desc">Layered frosted glass panels with backdrop blur and depth parallax.</p>
+          <div class="showcase-tags">
+            <span class="showcase-tag">Blur</span>
+            <span class="showcase-tag">Layers</span>
+            <span class="showcase-tag">Drag</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="typewriter-ai.html" class="showcase-card">
+        <div class="showcase-card-content">
+          <div class="showcase-num">16</div>
+          <h3 class="showcase-title">Typewriter AI</h3>
+          <p class="showcase-desc">AI-style streaming text with blinking cursor and thinking states.</p>
+          <div class="showcase-tags">
+            <span class="showcase-tag">Text</span>
+            <span class="showcase-tag">Stream</span>
+            <span class="showcase-tag">Cursor</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="data-pulse.html" class="showcase-card">
+        <div class="showcase-card-content">
+          <div class="showcase-num">17</div>
+          <h3 class="showcase-title">Data Pulse</h3>
+          <p class="showcase-desc">Real-time charts with pulsing metrics and scroll-triggered animations.</p>
+          <div class="showcase-tags">
+            <span class="showcase-tag">Charts</span>
+            <span class="showcase-tag">Counter</span>
+            <span class="showcase-tag">Pulse</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="hero-takeover.html" class="showcase-card">
+        <div class="showcase-card-content">
+          <div class="showcase-num">18</div>
+          <h3 class="showcase-title">Hero Takeover</h3>
+          <p class="showcase-desc">Scroll-locked cinematic reveal with layered parallax and text animation.</p>
+          <div class="showcase-tags">
+            <span class="showcase-tag">Pin</span>
+            <span class="showcase-tag">Parallax</span>
+            <span class="showcase-tag">Reveal</span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="section-label">Foundation Series</div>
+    <div class="showcase-grid">
+      <a href="scroll-reveal.html" class="showcase-card">
+        <div class="showcase-card-content">
+          <div class="showcase-num">01</div>
+          <h3 class="showcase-title">Scroll Reveal</h3>
+          <p class="showcase-desc">Progressive text reveal with character-level mouse distortion.</p>
+          <div class="showcase-tags">
+            <span class="showcase-tag">Typography</span>
+            <span class="showcase-tag">Scroll</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="particle-text.html" class="showcase-card">
+        <div class="showcase-card-content">
+          <div class="showcase-num">02</div>
+          <h3 class="showcase-title">Particle Text</h3>
+          <p class="showcase-desc">Image-to-particle reconstruction with mouse repulsion physics.</p>
+          <div class="showcase-tags">
+            <span class="showcase-tag">Canvas</span>
+            <span class="showcase-tag">Physics</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="weight-shift.html" class="showcase-card">
+        <div class="showcase-card-content">
+          <div class="showcase-num">03</div>
+          <h3 class="showcase-title">Weight Shift</h3>
+          <p class="showcase-desc">Variable font weight controlled by scroll and mouse proximity.</p>
+          <div class="showcase-tags">
+            <span class="showcase-tag">Variable Font</span>
+            <span class="showcase-tag">Mouse</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="image-dissolve.html" class="showcase-card">
+        <div class="showcase-card-content">
+          <div class="showcase-num">04</div>
+          <h3 class="showcase-title">Image Dissolve</h3>
+          <p class="showcase-desc">Photo-to-particle effect with scroll dispersion and color sampling.</p>
+          <div class="showcase-tags">
+            <span class="showcase-tag">Canvas</span>
+            <span class="showcase-tag">Image</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="cinematic-hero.html" class="showcase-card">
+        <div class="showcase-card-content">
+          <div class="showcase-num">05</div>
+          <h3 class="showcase-title">Cinematic Hero</h3>
+          <p class="showcase-desc">Movie-style parallax with deep layering and floating particles.</p>
+          <div class="showcase-tags">
+            <span class="showcase-tag">Parallax</span>
+            <span class="showcase-tag">Layers</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="editorial-scroll.html" class="showcase-card">
+        <div class="showcase-card-content">
+          <div class="showcase-num">06</div>
+          <h3 class="showcase-title">Editorial Scroll</h3>
+          <p class="showcase-desc">Magazine-style layout with parallax images and serif typography.</p>
+          <div class="showcase-tags">
+            <span class="showcase-tag">Editorial</span>
+            <span class="showcase-tag">Images</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="portfolio-grid.html" class="showcase-card">
+        <div class="showcase-card-content">
+          <div class="showcase-num">07</div>
+          <h3 class="showcase-title">Portfolio Grid</h3>
+          <p class="showcase-desc">Project showcase with magnetic cursor and reveal animations.</p>
+          <div class="showcase-tags">
+            <span class="showcase-tag">Grid</span>
+            <span class="showcase-tag">Cursor</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="data-story.html" class="showcase-card">
+        <div class="showcase-card-content">
+          <div class="showcase-num">08</div>
+          <h3 class="showcase-title">Data Story</h3>
+          <p class="showcase-desc">Animated charts, counters, and scroll-triggered visualizations.</p>
+          <div class="showcase-tags">
+            <span class="showcase-tag">Charts</span>
+            <span class="showcase-tag">Data</span>
+          </div>
+        </div>
+      </a>
+    </div>
+  </main>
+
+  <script>
+    const menuTrigger = document.getElementById('menuTrigger');
+    const menuPanel = document.getElementById('menuPanel');
+    const menuBackdrop = document.getElementById('menuBackdrop');
+    const menuLinks = document.querySelectorAll('.menu-link');
+
+    let isMenuOpen = false;
+
+    function openMenu() {
+      isMenuOpen = true;
+      menuTrigger.classList.add('active');
+      menuPanel.classList.add('active');
+      menuBackdrop.classList.add('active');
+
+      // Stagger animate menu links
+      gsap.to(menuLinks, {
+        opacity: 1,
+        x: 0,
+        duration: 0.4,
+        stagger: 0.03,
+        ease: 'power2.out',
+        delay: 0.1
+      });
+    }
+
+    function closeMenu() {
+      isMenuOpen = false;
+      menuTrigger.classList.remove('active');
+      menuPanel.classList.remove('active');
+      menuBackdrop.classList.remove('active');
+
+      // Reset menu links
+      gsap.set(menuLinks, { opacity: 0, x: -20 });
+    }
+
+    menuTrigger.addEventListener('click', () => {
+      if (isMenuOpen) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
+    });
+
+    menuBackdrop.addEventListener('click', closeMenu);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isMenuOpen) {
+        closeMenu();
+      }
+    });
+
+    // Animate cards on load
+    gsap.from('.showcase-card', {
+      opacity: 0,
+      y: 30,
+      duration: 0.6,
+      stagger: 0.05,
+      ease: 'power2.out',
+      delay: 0.2
+    });
+
+    // Animate hero
+    gsap.from('.hero > *', {
+      opacity: 0,
+      y: 20,
+      duration: 0.6,
+      stagger: 0.1,
+      ease: 'power2.out'
+    });
+  </script>
+</body>
+</html>

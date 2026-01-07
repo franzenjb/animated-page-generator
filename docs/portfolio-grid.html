@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Grid</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0c0c0c;
+      font-family: 'Space Grotesk', sans-serif;
+      color: #fff;
+      min-height: 100vh;
+      cursor: none;
+    }
+
+    /* Custom cursor */
+    .cursor {
+      position: fixed;
+      pointer-events: none;
+      z-index: 10000;
+    }
+
+    .cursor-dot {
+      width: 8px;
+      height: 8px;
+      background: #fff;
+      border-radius: 50%;
+    }
+
+    .cursor-ring {
+      position: absolute;
+      top: -20px;
+      left: -20px;
+      width: 48px;
+      height: 48px;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .cursor.hovering .cursor-ring {
+      transform: scale(1.5);
+      border-color: rgba(255,255,255,0.8);
+    }
+
+    .cursor-label {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .cursor.hovering .cursor-label {
+      opacity: 1;
+    }
+
+    /* Header */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 30px 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+      mix-blend-mode: difference;
+    }
+
+    .logo {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+    }
+
+    nav {
+      display: flex;
+      gap: 40px;
+    }
+
+    nav a {
+      font-size: 12px;
+      color: #fff;
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      opacity: 0.6;
+      transition: opacity 0.3s ease;
+    }
+
+    nav a:hover {
+      opacity: 1;
+    }
+
+    /* Hero */
+    .hero {
+      height: 60vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 0 50px 60px;
+    }
+
+    .hero-label {
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #444;
+      margin-bottom: 20px;
+    }
+
+    .hero-title {
+      font-size: clamp(40px, 8vw, 100px);
+      font-weight: 300;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .hero-title span {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(60px) rotate(3deg);
+    }
+
+    /* Grid */
+    .grid-section {
+      padding: 80px 50px 150px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 30px;
+    }
+
+    /* Project cards */
+    .project {
+      position: relative;
+      overflow: hidden;
+      background: #111;
+    }
+
+    .project:nth-child(1) { grid-column: span 7; }
+    .project:nth-child(2) { grid-column: span 5; }
+    .project:nth-child(3) { grid-column: span 5; }
+    .project:nth-child(4) { grid-column: span 7; }
+    .project:nth-child(5) { grid-column: span 6; }
+    .project:nth-child(6) { grid-column: span 6; }
+
+    .project-image-wrapper {
+      position: relative;
+      overflow: hidden;
+      aspect-ratio: 16/10;
+    }
+
+    .project-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .project:hover .project-image {
+      transform: scale(1.08);
+    }
+
+    .project-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .project:hover .project-overlay {
+      opacity: 1;
+    }
+
+    .project-reveal {
+      position: absolute;
+      inset: 0;
+      background: #0c0c0c;
+      transform-origin: left;
+      transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .project.revealed .project-reveal {
+      transform: scaleX(0);
+    }
+
+    .project-info {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 30px;
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.4s ease;
+    }
+
+    .project:hover .project-info {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .project-number {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .project-title {
+      font-size: 24px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .project-category {
+      font-size: 12px;
+      color: #888;
+      letter-spacing: 0.05em;
+    }
+
+    .project-tags {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .project-tag {
+      font-size: 10px;
+      padding: 4px 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+    }
+
+    /* Magnetic effect container */
+    .magnetic {
+      display: inline-block;
+    }
+
+    /* Footer */
+    footer {
+      padding: 60px 50px;
+      border-top: 1px solid #1a1a1a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-text {
+      font-size: 12px;
+      color: #444;
+    }
+
+    .footer-cta {
+      font-size: 14px;
+      color: #fff;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .footer-cta::after {
+      content: '';
+      width: 40px;
+      height: 1px;
+      background: #fff;
+      transition: width 0.3s ease;
+    }
+
+    .footer-cta:hover::after {
+      width: 60px;
+    }
+
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .project:nth-child(n) {
+        grid-column: span 1;
+      }
+      header, .hero, .grid-section, footer {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="cursor" id="cursor">
+    <div class="cursor-dot"></div>
+    <div class="cursor-ring"></div>
+    <div class="cursor-label">View Project</div>
+  </div>
+
+  <header>
+    <div class="logo magnetic">STUDIO.ARC</div>
+    <nav>
+      <a href="#" class="magnetic">Work</a>
+      <a href="#" class="magnetic">About</a>
+      <a href="#" class="magnetic">Contact</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-label">Selected Works / 2024-2025</div>
+    <h1 class="hero-title">
+      <span>Design</span> <span>that</span> <span>moves</span>
+    </h1>
+  </section>
+
+  <section class="grid-section">
+    <div class="grid">
+      <article class="project" data-cursor="View Project">
+        <div class="project-image-wrapper">
+          <img class="project-image" src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80" alt="Abstract">
+          <div class="project-overlay"></div>
+          <div class="project-reveal"></div>
+        </div>
+        <div class="project-info">
+          <div class="project-number">01</div>
+          <h3 class="project-title">Meridian Brand Identity</h3>
+          <div class="project-category">Branding / Digital</div>
+          <div class="project-tags">
+            <span class="project-tag">Identity</span>
+            <span class="project-tag">Web</span>
+            <span class="project-tag">Motion</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="project" data-cursor="View Project">
+        <div class="project-image-wrapper">
+          <img class="project-image" src="https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=800&q=80" alt="Architecture">
+          <div class="project-overlay"></div>
+          <div class="project-reveal"></div>
+        </div>
+        <div class="project-info">
+          <div class="project-number">02</div>
+          <h3 class="project-title">Void Architecture</h3>
+          <div class="project-category">Photography / Editorial</div>
+          <div class="project-tags">
+            <span class="project-tag">Print</span>
+            <span class="project-tag">Photo</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="project" data-cursor="View Project">
+        <div class="project-image-wrapper">
+          <img class="project-image" src="https://images.unsplash.com/photo-1550684376-efcbd6e3f031?w=800&q=80" alt="Gradient">
+          <div class="project-overlay"></div>
+          <div class="project-reveal"></div>
+        </div>
+        <div class="project-info">
+          <div class="project-number">03</div>
+          <h3 class="project-title">Spectrum App</h3>
+          <div class="project-category">Product / UX</div>
+          <div class="project-tags">
+            <span class="project-tag">App</span>
+            <span class="project-tag">UI/UX</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="project" data-cursor="View Project">
+        <div class="project-image-wrapper">
+          <img class="project-image" src="https://images.unsplash.com/photo-1617791160505-6f00504e3519?w=1200&q=80" alt="3D">
+          <div class="project-overlay"></div>
+          <div class="project-reveal"></div>
+        </div>
+        <div class="project-info">
+          <div class="project-number">04</div>
+          <h3 class="project-title">Morpheus 3D Experience</h3>
+          <div class="project-category">Interactive / WebGL</div>
+          <div class="project-tags">
+            <span class="project-tag">3D</span>
+            <span class="project-tag">WebGL</span>
+            <span class="project-tag">Interactive</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="project" data-cursor="View Project">
+        <div class="project-image-wrapper">
+          <img class="project-image" src="https://images.unsplash.com/photo-1557683316-973673bdar25?w=800&q=80" alt="Typography">
+          <div class="project-overlay"></div>
+          <div class="project-reveal"></div>
+        </div>
+        <div class="project-info">
+          <div class="project-number">05</div>
+          <h3 class="project-title">TypeFace Foundry</h3>
+          <div class="project-category">Typography / Branding</div>
+          <div class="project-tags">
+            <span class="project-tag">Type</span>
+            <span class="project-tag">Identity</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="project" data-cursor="View Project">
+        <div class="project-image-wrapper">
+          <img class="project-image" src="https://images.unsplash.com/photo-1579547621113-e4bb2a19bdd6?w=800&q=80" alt="Product">
+          <div class="project-overlay"></div>
+          <div class="project-reveal"></div>
+        </div>
+        <div class="project-info">
+          <div class="project-number">06</div>
+          <h3 class="project-title">Lunar Packaging</h3>
+          <div class="project-category">Packaging / Print</div>
+          <div class="project-tags">
+            <span class="project-tag">Packaging</span>
+            <span class="project-tag">Print</span>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-text">Selected works from 2024-2025</div>
+    <a href="#" class="footer-cta magnetic">View all projects</a>
+  </footer>
+
+  <script>
+    const cursor = document.getElementById('cursor');
+    const cursorLabel = cursor.querySelector('.cursor-label');
+    const projects = document.querySelectorAll('.project');
+    const magnetics = document.querySelectorAll('.magnetic');
+    const heroSpans = document.querySelectorAll('.hero-title span');
+
+    let mouseX = 0, mouseY = 0;
+    let cursorX = 0, cursorY = 0;
+
+    // Cursor movement
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    function animateCursor() {
+      cursorX += (mouseX - cursorX) * 0.12;
+      cursorY += (mouseY - cursorY) * 0.12;
+      cursor.style.left = cursorX + 'px';
+      cursor.style.top = cursorY + 'px';
+      requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+
+    // Project hover
+    projects.forEach(project => {
+      project.addEventListener('mouseenter', () => {
+        cursor.classList.add('hovering');
+        cursorLabel.textContent = project.dataset.cursor || 'View';
+      });
+
+      project.addEventListener('mouseleave', () => {
+        cursor.classList.remove('hovering');
+      });
+    });
+
+    // Magnetic effect
+    magnetics.forEach(el => {
+      el.addEventListener('mousemove', (e) => {
+        const rect = el.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        el.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+      });
+
+      el.addEventListener('mouseleave', () => {
+        el.style.transform = 'translate(0, 0)';
+        el.style.transition = 'transform 0.3s ease';
+      });
+
+      el.addEventListener('mouseenter', () => {
+        el.style.transition = 'none';
+      });
+    });
+
+    // Hero animation
+    heroSpans.forEach((span, i) => {
+      setTimeout(() => {
+        span.style.transition = 'all 1s cubic-bezier(0.16, 1, 0.3, 1)';
+        span.style.opacity = '1';
+        span.style.transform = 'translateY(0) rotate(0)';
+      }, 300 + i * 100);
+    });
+
+    // Scroll reveal projects
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => {
+            entry.target.classList.add('revealed');
+          }, i * 100);
+        }
+      });
+    }, { threshold: 0.2 });
+
+    projects.forEach(project => observer.observe(project));
+
+    // Parallax on scroll
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollY = window.scrollY;
+          projects.forEach((project, i) => {
+            const rect = project.getBoundingClientRect();
+            const visible = rect.top < window.innerHeight && rect.bottom > 0;
+            if (visible) {
+              const parallax = (rect.top / window.innerHeight) * 30;
+              const img = project.querySelector('.project-image');
+              img.style.transform = `scale(1) translateY(${parallax}px)`;
+            }
+          });
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+  </script>
+</body>
+</html>

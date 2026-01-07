@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Dissolve</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0a;
+      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+      color: #fafafa;
+      overflow-x: hidden;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    .content {
+      position: relative;
+      z-index: 10;
+      min-height: 300vh;
+    }
+
+    .hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 60px;
+      pointer-events: none;
+    }
+
+    .hero-text {
+      max-width: 500px;
+    }
+
+    .label {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #444;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 300;
+      line-height: 1.2;
+      margin-bottom: 20px;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    h1.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .description {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #666;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+    }
+
+    .description.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .section {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 60px;
+    }
+
+    .section-content {
+      max-width: 400px;
+    }
+
+    .section h2 {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #333;
+      margin-bottom: 24px;
+    }
+
+    .section p {
+      font-size: 15px;
+      line-height: 1.8;
+      color: #555;
+    }
+
+    .hint {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: #333;
+      text-align: right;
+      font-family: 'Courier New', monospace;
+      z-index: 100;
+    }
+
+    .progress {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      background: #111;
+      z-index: 100;
+    }
+
+    .progress-fill {
+      width: 100%;
+      height: 100%;
+      background: #333;
+      transform-origin: top;
+      transform: scaleY(0);
+    }
+
+    .image-credit {
+      position: fixed;
+      bottom: 30px;
+      left: 30px;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: #222;
+      font-family: 'Courier New', monospace;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <div class="progress">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <div class="content">
+    <div class="hero">
+      <div class="hero-text">
+        <div class="label">Architecture Study</div>
+        <h1 id="title">The interplay of light and structure defines our perception of space</h1>
+        <p class="description" id="desc">Move your cursor to disturb the image. Scroll to reveal the underlying form. Each particle remembers its origin.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-content">
+        <h2>About the technique</h2>
+        <p>This effect samples color data from the source image and reconstructs it as thousands of individual particles. Each particle maintains its original position through spring physics, creating an organic response to interaction.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-content">
+        <h2>The mathematics</h2>
+        <p>Particle displacement uses inverse-square falloff from the cursor position. Return force is calculated as a simple spring: F = k(origin - position). Velocity damping creates the smooth, fluid motion.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="hint">
+    Move cursor to disturb<br>
+    Scroll to disperse
+  </div>
+
+  <div class="image-credit">
+    Image: Unsplash Architecture
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const progressFill = document.getElementById('progressFill');
+    const title = document.getElementById('title');
+    const desc = document.getElementById('desc');
+
+    let width, height;
+    let particles = [];
+    let mouse = { x: null, y: null, radius: 100 };
+    let scrollProgress = 0;
+    let imageLoaded = false;
+
+    const gap = 4;
+    const particleSize = 2;
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      if (imageLoaded) initParticles();
+    }
+
+    // Load image
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      imageLoaded = true;
+      initParticles();
+      animate();
+
+      // Show text
+      setTimeout(() => {
+        title.classList.add('visible');
+        desc.classList.add('visible');
+      }, 500);
+    };
+    img.src = 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1200&q=80';
+
+    function initParticles() {
+      particles = [];
+
+      // Draw image to offscreen canvas
+      const offscreen = document.createElement('canvas');
+      const offCtx = offscreen.getContext('2d');
+
+      // Calculate image dimensions to cover viewport
+      const imgRatio = img.width / img.height;
+      const viewRatio = width / height;
+
+      let drawWidth, drawHeight, offsetX, offsetY;
+
+      if (imgRatio > viewRatio) {
+        drawHeight = height;
+        drawWidth = height * imgRatio;
+        offsetX = (width - drawWidth) / 2;
+        offsetY = 0;
+      } else {
+        drawWidth = width;
+        drawHeight = width / imgRatio;
+        offsetX = 0;
+        offsetY = (height - drawHeight) / 2;
+      }
+
+      offscreen.width = width;
+      offscreen.height = height;
+      offCtx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+
+      // Sample pixels
+      const imageData = offCtx.getImageData(0, 0, width, height);
+      const data = imageData.data;
+
+      for (let y = 0; y < height; y += gap) {
+        for (let x = 0; x < width; x += gap) {
+          const i = (y * width + x) * 4;
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const a = data[i + 3];
+
+          // Only create particle if pixel has content
+          if (a > 50) {
+            const brightness = (r + g + b) / 3;
+
+            particles.push({
+              x: x,
+              y: y,
+              originX: x,
+              originY: y,
+              vx: 0,
+              vy: 0,
+              size: particleSize,
+              color: `rgb(${r}, ${g}, ${b})`,
+              brightness: brightness
+            });
+          }
+        }
+      }
+    }
+
+    function animate() {
+      // Clear with slight fade for trails
+      ctx.fillStyle = 'rgba(10, 10, 10, 0.3)';
+      ctx.fillRect(0, 0, width, height);
+
+      // Scroll-based dispersion
+      const disperseForce = scrollProgress * 2;
+
+      particles.forEach((p, i) => {
+        // Mouse repulsion
+        if (mouse.x !== null) {
+          const dx = p.x - mouse.x;
+          const dy = p.y - mouse.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < mouse.radius) {
+            const force = (mouse.radius - dist) / mouse.radius;
+            const angle = Math.atan2(dy, dx);
+            p.vx += Math.cos(angle) * force * 4;
+            p.vy += Math.sin(angle) * force * 4;
+          }
+        }
+
+        // Scroll dispersion - particles drift based on their brightness
+        if (disperseForce > 0) {
+          const noise = Math.sin(i * 0.1 + Date.now() * 0.001) * disperseForce;
+          const driftX = (Math.random() - 0.5) * disperseForce * 0.5;
+          const driftY = -disperseForce * (p.brightness / 255) * 0.3 + noise * 0.2;
+          p.vx += driftX;
+          p.vy += driftY;
+        }
+
+        // Return to origin (weaker when scrolled)
+        const returnStrength = 0.05 * (1 - scrollProgress * 0.8);
+        const dx = p.originX - p.x;
+        const dy = p.originY - p.y;
+        p.vx += dx * returnStrength;
+        p.vy += dy * returnStrength;
+
+        // Friction
+        p.vx *= 0.92;
+        p.vy *= 0.92;
+
+        // Apply velocity
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Draw
+        const alpha = 1 - scrollProgress * 0.5;
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(animate);
+    }
+
+    // Mouse tracking
+    document.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    document.addEventListener('mouseleave', () => {
+      mouse.x = null;
+      mouse.y = null;
+    });
+
+    // Scroll handling
+    window.addEventListener('scroll', () => {
+      const scrollTop = window.scrollY;
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      scrollProgress = Math.min(1, scrollTop / maxScroll);
+
+      progressFill.style.transform = `scaleY(${scrollProgress})`;
+    });
+
+    window.addEventListener('resize', resize);
+    resize();
+  </script>
+</body>
+</html>

@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cinematic Hero</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      font-family: 'Inter', sans-serif;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* Cinematic bars */
+    .letterbox {
+      position: fixed;
+      left: 0;
+      right: 0;
+      height: 10vh;
+      background: #000;
+      z-index: 100;
+    }
+
+    .letterbox.top { top: 0; }
+    .letterbox.bottom { bottom: 0; }
+
+    /* Hero container */
+    .hero {
+      position: relative;
+      height: 200vh;
+    }
+
+    .hero-sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Background layers */
+    .layer {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      will-change: transform;
+    }
+
+    .layer-sky {
+      background: linear-gradient(to bottom,
+        #0a0a15 0%,
+        #1a1a2e 30%,
+        #2d2d44 60%,
+        #16213e 100%);
+    }
+
+    .layer-mountains {
+      background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80');
+      filter: brightness(0.3) saturate(0.5);
+      background-position: center 70%;
+    }
+
+    .layer-fog {
+      background: linear-gradient(to top,
+        rgba(10, 10, 20, 0.9) 0%,
+        transparent 50%);
+    }
+
+    .layer-dust {
+      opacity: 0.3;
+    }
+
+    /* Title treatment */
+    .title-container {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .pre-title {
+      font-size: 12px;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      color: #666;
+      margin-bottom: 20px;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .main-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(80px, 20vw, 300px);
+      line-height: 0.85;
+      letter-spacing: 0.02em;
+      text-align: center;
+      position: relative;
+    }
+
+    .title-line {
+      display: block;
+      overflow: hidden;
+    }
+
+    .title-char {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(100%);
+    }
+
+    .post-title {
+      font-size: 14px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #444;
+      margin-top: 40px;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    /* Floating elements */
+    .floating-elements {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .float-particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%;
+    }
+
+    /* Scroll indicator */
+    .scroll-indicator {
+      position: absolute;
+      bottom: 15vh;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      text-align: center;
+      opacity: 0;
+    }
+
+    .scroll-indicator span {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #444;
+      margin-bottom: 15px;
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(to bottom, #444, transparent);
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scroll-line::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 20px;
+      background: #fff;
+      animation: scrollDown 2s ease-in-out infinite;
+    }
+
+    @keyframes scrollDown {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(400%); }
+    }
+
+    /* Content sections */
+    .content {
+      position: relative;
+      z-index: 50;
+      background: #0a0a0a;
+    }
+
+    .section {
+      padding: 15vh 10vw;
+    }
+
+    .section-intro {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 100px;
+      align-items: center;
+    }
+
+    .intro-visual {
+      position: relative;
+      aspect-ratio: 4/5;
+      overflow: hidden;
+    }
+
+    .intro-visual img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(1.2);
+      opacity: 0;
+      transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .intro-visual.revealed img {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    .intro-visual::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: #0a0a0a;
+      z-index: 2;
+      transform-origin: bottom;
+      transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .intro-visual.revealed::before {
+      transform: scaleY(0);
+    }
+
+    .intro-text h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(32px, 5vw, 64px);
+      margin-bottom: 30px;
+      opacity: 0;
+      transform: translateY(40px);
+    }
+
+    .intro-text p {
+      font-size: 16px;
+      line-height: 1.9;
+      color: #888;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .intro-text.revealed h2,
+    .intro-text.revealed p {
+      opacity: 1;
+      transform: translateY(0);
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .intro-text.revealed p {
+      transition-delay: 0.2s;
+    }
+
+    /* Stats section */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 40px;
+      padding: 10vh 0;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+      margin: 10vh 0;
+    }
+
+    .stat {
+      text-align: center;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .stat.revealed {
+      opacity: 1;
+      transform: translateY(0);
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .stat-number {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(40px, 6vw, 80px);
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #555;
+    }
+
+    /* Quote */
+    .quote-section {
+      padding: 20vh 15vw;
+      text-align: center;
+    }
+
+    .quote {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(28px, 5vw, 60px);
+      line-height: 1.2;
+      margin-bottom: 30px;
+      opacity: 0;
+    }
+
+    .quote.revealed {
+      opacity: 1;
+      transition: opacity 1s ease;
+    }
+
+    .quote-author {
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #555;
+      opacity: 0;
+    }
+
+    .quote-author.revealed {
+      opacity: 1;
+      transition: opacity 0.6s ease 0.3s;
+    }
+
+    /* Mouse follower */
+    .mouse-light {
+      position: fixed;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 1000;
+      mix-blend-mode: screen;
+    }
+
+    @media (max-width: 768px) {
+      .section-intro {
+        grid-template-columns: 1fr;
+        gap: 50px;
+      }
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .letterbox {
+        height: 5vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="letterbox top"></div>
+  <div class="letterbox bottom"></div>
+  <div class="mouse-light" id="mouseLight"></div>
+
+  <section class="hero">
+    <div class="hero-sticky">
+      <div class="layer layer-sky"></div>
+      <div class="layer layer-mountains" id="mountains"></div>
+      <div class="layer layer-fog" id="fog"></div>
+      <div class="floating-elements" id="floatingElements"></div>
+
+      <div class="title-container" id="titleContainer">
+        <div class="pre-title" id="preTitle">A Visual Journey</div>
+        <h1 class="main-title">
+          <span class="title-line" id="titleLine1"></span>
+          <span class="title-line" id="titleLine2"></span>
+        </h1>
+        <div class="post-title" id="postTitle">Scroll to Begin</div>
+      </div>
+
+      <div class="scroll-indicator" id="scrollIndicator">
+        <span>Discover</span>
+        <div class="scroll-line"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="content">
+    <section class="section">
+      <div class="section-intro">
+        <div class="intro-visual" id="introVisual">
+          <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80" alt="Mountain">
+        </div>
+        <div class="intro-text" id="introText">
+          <h2>Beyond the Horizon</h2>
+          <p>In the vast expanse where earth meets sky, we find the essence of exploration. Every peak conquered reveals ten more waiting to be discovered. The mountain doesn't care about your plans—it only asks if you're ready to rise.</p>
+        </div>
+      </div>
+
+      <div class="stats" id="stats">
+        <div class="stat">
+          <div class="stat-number">8,849</div>
+          <div class="stat-label">Meters Peak</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">14</div>
+          <div class="stat-label">Summits Above 8K</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">5,000+</div>
+          <div class="stat-label">Successful Ascents</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">-60°C</div>
+          <div class="stat-label">Extreme Temp</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="quote-section">
+      <blockquote class="quote" id="quote">"The mountains are calling and I must go."</blockquote>
+      <cite class="quote-author" id="quoteAuthor">— John Muir</cite>
+    </section>
+  </div>
+
+  <script>
+    const mouseLight = document.getElementById('mouseLight');
+    const mountains = document.getElementById('mountains');
+    const fog = document.getElementById('fog');
+    const titleContainer = document.getElementById('titleContainer');
+    const floatingElements = document.getElementById('floatingElements');
+
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    let lightX = mouseX;
+    let lightY = mouseY;
+
+    // Create floating particles
+    for (let i = 0; i < 50; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'float-particle';
+      particle.style.left = Math.random() * 100 + '%';
+      particle.style.top = Math.random() * 100 + '%';
+      particle.style.animationDelay = Math.random() * 5 + 's';
+      floatingElements.appendChild(particle);
+    }
+
+    // Split title into characters
+    const line1Text = 'INTO THE';
+    const line2Text = 'UNKNOWN';
+
+    const titleLine1 = document.getElementById('titleLine1');
+    const titleLine2 = document.getElementById('titleLine2');
+
+    line1Text.split('').forEach((char, i) => {
+      const span = document.createElement('span');
+      span.className = 'title-char';
+      span.textContent = char === ' ' ? '\u00A0' : char;
+      span.style.transitionDelay = (i * 0.05) + 's';
+      titleLine1.appendChild(span);
+    });
+
+    line2Text.split('').forEach((char, i) => {
+      const span = document.createElement('span');
+      span.className = 'title-char';
+      span.textContent = char;
+      span.style.transitionDelay = ((line1Text.length + i) * 0.05) + 's';
+      titleLine2.appendChild(span);
+    });
+
+    // Animate title on load
+    setTimeout(() => {
+      document.querySelectorAll('.title-char').forEach(char => {
+        char.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+        char.style.opacity = '1';
+        char.style.transform = 'translateY(0)';
+      });
+
+      document.getElementById('preTitle').style.transition = 'all 0.6s ease 0.5s';
+      document.getElementById('preTitle').style.opacity = '1';
+      document.getElementById('preTitle').style.transform = 'translateY(0)';
+
+      document.getElementById('postTitle').style.transition = 'all 0.6s ease 0.8s';
+      document.getElementById('postTitle').style.opacity = '1';
+      document.getElementById('postTitle').style.transform = 'translateY(0)';
+
+      document.getElementById('scrollIndicator').style.transition = 'all 0.6s ease 1.2s';
+      document.getElementById('scrollIndicator').style.opacity = '1';
+    }, 500);
+
+    // Mouse tracking
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    function animate() {
+      lightX += (mouseX - lightX) * 0.1;
+      lightY += (mouseY - lightY) * 0.1;
+
+      mouseLight.style.left = lightX - 200 + 'px';
+      mouseLight.style.top = lightY - 200 + 'px';
+
+      // Parallax on mouse
+      const centerX = (mouseX / window.innerWidth - 0.5) * 2;
+      const centerY = (mouseY / window.innerHeight - 0.5) * 2;
+
+      mountains.style.transform = `translate(${centerX * -20}px, ${centerY * -10}px) scale(1.1)`;
+
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // Scroll parallax
+    window.addEventListener('scroll', () => {
+      const scrollY = window.scrollY;
+      const heroHeight = window.innerHeight;
+
+      // Title zoom and fade
+      const progress = Math.min(1, scrollY / heroHeight);
+      titleContainer.style.transform = `scale(${1 + progress * 0.3})`;
+      titleContainer.style.opacity = 1 - progress * 1.5;
+
+      // Mountain parallax
+      mountains.style.backgroundPosition = `center ${70 + scrollY * 0.05}%`;
+
+      // Fog rise
+      fog.style.transform = `translateY(${-scrollY * 0.3}px)`;
+
+      // Content reveals
+      const introVisual = document.getElementById('introVisual');
+      const introText = document.getElementById('introText');
+      const stats = document.querySelectorAll('.stat');
+      const quote = document.getElementById('quote');
+      const quoteAuthor = document.getElementById('quoteAuthor');
+
+      if (introVisual.getBoundingClientRect().top < window.innerHeight * 0.8) {
+        introVisual.classList.add('revealed');
+      }
+
+      if (introText.getBoundingClientRect().top < window.innerHeight * 0.7) {
+        introText.classList.add('revealed');
+      }
+
+      stats.forEach((stat, i) => {
+        if (stat.getBoundingClientRect().top < window.innerHeight * 0.8) {
+          setTimeout(() => stat.classList.add('revealed'), i * 100);
+        }
+      });
+
+      if (quote.getBoundingClientRect().top < window.innerHeight * 0.7) {
+        quote.classList.add('revealed');
+        quoteAuthor.classList.add('revealed');
+      }
+    });
+
+    // Floating particle animation
+    function animateParticles() {
+      const particles = document.querySelectorAll('.float-particle');
+      particles.forEach((p, i) => {
+        const speed = 0.5 + Math.random() * 0.5;
+        const x = parseFloat(p.style.left);
+        const y = parseFloat(p.style.top);
+
+        let newY = y - speed * 0.02;
+        if (newY < -5) newY = 105;
+
+        p.style.top = newY + '%';
+        p.style.left = x + Math.sin(Date.now() * 0.001 + i) * 0.02 + '%';
+      });
+
+      requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+  </script>
+</body>
+</html>

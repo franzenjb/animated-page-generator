@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infinite Machine</title>
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/style.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-mono/style.css" rel="stylesheet">
+  <style>
+    :root {
+      --realie-bg: #181b1b;
+      --realie-accent: #0d4a47;
+      --realie-accent-glow: #14b8a6;
+      --realie-text: #ede9fe;
+      --realie-text-muted: #71717a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--realie-bg);
+      min-height: 500vh;
+      font-family: 'Geist', system-ui, sans-serif;
+      color: var(--realie-text);
+      overflow-x: hidden;
+    }
+
+    .back-link {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      color: var(--realie-text-muted);
+      text-decoration: none;
+      z-index: 100;
+      padding: 8px 16px;
+      border: 1px solid rgba(237, 233, 254, 0.1);
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .back-link:hover {
+      color: var(--realie-accent-glow);
+      border-color: var(--realie-accent-glow);
+    }
+
+    .ui {
+      position: fixed;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .ui-top {
+      top: 30px;
+      left: 30px;
+    }
+
+    .ui-bottom {
+      bottom: 30px;
+      left: 30px;
+      right: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--realie-text-muted);
+      margin-bottom: 8px;
+    }
+
+    .title {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--realie-accent-glow);
+    }
+
+    .hint {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      color: var(--realie-text-muted);
+      text-align: right;
+      line-height: 1.6;
+    }
+
+    .stats {
+      display: flex;
+      gap: 40px;
+    }
+
+    .stat-item {
+      text-align: left;
+    }
+
+    .stat-value {
+      font-family: 'Geist Mono', monospace;
+      font-size: 32px;
+      font-weight: 300;
+      color: var(--realie-text);
+      opacity: 0.4;
+    }
+
+    .stat-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 9px;
+      color: var(--realie-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 4px;
+    }
+
+    /* Machine container */
+    .machine-container {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .machine-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Gear styling */
+    .gear {
+      fill: none;
+      stroke: var(--realie-accent-glow);
+      stroke-width: 1;
+      opacity: 0.6;
+    }
+
+    .gear-fill {
+      fill: rgba(20, 184, 166, 0.05);
+    }
+
+    .gear-center {
+      fill: var(--realie-bg);
+      stroke: var(--realie-accent-glow);
+      stroke-width: 1;
+    }
+
+    /* Conveyor belt */
+    .conveyor {
+      stroke: rgba(237, 233, 254, 0.1);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .conveyor-item {
+      fill: rgba(20, 184, 166, 0.2);
+      stroke: var(--realie-accent-glow);
+      stroke-width: 1;
+    }
+
+    /* Piston */
+    .piston-rod {
+      fill: rgba(237, 233, 254, 0.1);
+      stroke: rgba(237, 233, 254, 0.3);
+      stroke-width: 1;
+    }
+
+    .piston-head {
+      fill: rgba(20, 184, 166, 0.1);
+      stroke: var(--realie-accent-glow);
+      stroke-width: 1.5;
+    }
+
+    /* Grid background */
+    .grid-line {
+      stroke: rgba(237, 233, 254, 0.03);
+      stroke-width: 1;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">Back to Showcase</a>
+
+  <div class="ui ui-top">
+    <div class="label">ULTRAHARD 13</div>
+    <div class="title">Infinite Machine</div>
+  </div>
+
+  <div class="ui ui-bottom">
+    <div class="stats">
+      <div class="stat-item">
+        <div class="stat-value" id="rpmValue">0</div>
+        <div class="stat-label">RPM</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="velocityValue">0.0</div>
+        <div class="stat-label">Velocity</div>
+      </div>
+    </div>
+    <div class="hint">
+      Scroll to power<br>
+      Speed = scroll velocity
+    </div>
+  </div>
+
+  <div class="machine-container">
+    <svg class="machine-svg" id="machineSvg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <!-- Gear tooth pattern -->
+        <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+          <line x1="60" y1="0" x2="60" y2="60" class="grid-line"/>
+          <line x1="0" y1="60" x2="60" y2="60" class="grid-line"/>
+        </pattern>
+
+        <!-- Glow filter -->
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+
+      <!-- Background grid -->
+      <rect width="100%" height="100%" fill="url(#grid)"/>
+
+      <!-- Main gear system will be generated by JS -->
+      <g id="gearSystem"></g>
+
+      <!-- Conveyor belt -->
+      <g id="conveyorSystem"></g>
+
+      <!-- Pistons -->
+      <g id="pistonSystem"></g>
+
+      <!-- Connection lines -->
+      <g id="connectionLines"></g>
+    </svg>
+  </div>
+
+  <script>
+    const svg = document.getElementById('machineSvg');
+    const gearSystem = document.getElementById('gearSystem');
+    const conveyorSystem = document.getElementById('conveyorSystem');
+    const pistonSystem = document.getElementById('pistonSystem');
+    const connectionLines = document.getElementById('connectionLines');
+
+    const rpmValue = document.getElementById('rpmValue');
+    const velocityValue = document.getElementById('velocityValue');
+
+    // State
+    let scrollY = 0;
+    let lastScrollY = 0;
+    let scrollVelocity = 0;
+    let rotation = 0;
+
+    // Generate gear path with teeth
+    function createGearPath(cx, cy, innerRadius, outerRadius, teeth) {
+      const points = [];
+      const angleStep = (Math.PI * 2) / (teeth * 2);
+
+      for (let i = 0; i < teeth * 2; i++) {
+        const angle = i * angleStep - Math.PI / 2;
+        const radius = i % 2 === 0 ? outerRadius : innerRadius;
+        const x = cx + Math.cos(angle) * radius;
+        const y = cy + Math.sin(angle) * radius;
+        points.push(`${i === 0 ? 'M' : 'L'} ${x} ${y}`);
+      }
+
+      return points.join(' ') + ' Z';
+    }
+
+    // Gear configurations
+    const gears = [
+      { cx: 960, cy: 540, inner: 100, outer: 130, teeth: 24, speed: 1, direction: 1 },
+      { cx: 760, cy: 400, inner: 60, outer: 80, teeth: 16, speed: 1.5, direction: -1 },
+      { cx: 1160, cy: 400, inner: 60, outer: 80, teeth: 16, speed: 1.5, direction: -1 },
+      { cx: 760, cy: 680, inner: 60, outer: 80, teeth: 16, speed: 1.5, direction: -1 },
+      { cx: 1160, cy: 680, inner: 60, outer: 80, teeth: 16, speed: 1.5, direction: -1 },
+      { cx: 580, cy: 300, inner: 40, outer: 55, teeth: 12, speed: 2, direction: 1 },
+      { cx: 1340, cy: 300, inner: 40, outer: 55, teeth: 12, speed: 2, direction: 1 },
+      { cx: 580, cy: 780, inner: 40, outer: 55, teeth: 12, speed: 2, direction: 1 },
+      { cx: 1340, cy: 780, inner: 40, outer: 55, teeth: 12, speed: 2, direction: 1 },
+      { cx: 400, cy: 540, inner: 80, outer: 105, teeth: 20, speed: 1.2, direction: -1 },
+      { cx: 1520, cy: 540, inner: 80, outer: 105, teeth: 20, speed: 1.2, direction: -1 },
+      // Smaller decorative gears
+      { cx: 200, cy: 200, inner: 25, outer: 35, teeth: 10, speed: 3, direction: 1 },
+      { cx: 1720, cy: 200, inner: 25, outer: 35, teeth: 10, speed: 3, direction: -1 },
+      { cx: 200, cy: 880, inner: 25, outer: 35, teeth: 10, speed: 3, direction: -1 },
+      { cx: 1720, cy: 880, inner: 25, outer: 35, teeth: 10, speed: 3, direction: 1 },
+    ];
+
+    // Create gear elements
+    gears.forEach((gear, i) => {
+      const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      group.id = `gear-${i}`;
+
+      // Gear fill
+      const fill = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      fill.setAttribute('class', 'gear-fill');
+      fill.setAttribute('d', createGearPath(0, 0, gear.inner, gear.outer, gear.teeth));
+
+      // Gear outline
+      const outline = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      outline.setAttribute('class', 'gear');
+      outline.setAttribute('d', createGearPath(0, 0, gear.inner, gear.outer, gear.teeth));
+      outline.setAttribute('filter', 'url(#glow)');
+
+      // Center circle
+      const center = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      center.setAttribute('class', 'gear-center');
+      center.setAttribute('r', gear.inner * 0.3);
+
+      // Inner decoration
+      const innerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      innerCircle.setAttribute('class', 'gear');
+      innerCircle.setAttribute('r', gear.inner * 0.7);
+
+      group.appendChild(fill);
+      group.appendChild(outline);
+      group.appendChild(innerCircle);
+      group.appendChild(center);
+
+      // Position
+      group.setAttribute('transform', `translate(${gear.cx}, ${gear.cy})`);
+      gearSystem.appendChild(group);
+    });
+
+    // Conveyor belt items
+    const conveyorItems = [];
+    const conveyorY = 950;
+
+    for (let i = 0; i < 8; i++) {
+      const item = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      item.setAttribute('class', 'conveyor-item');
+      item.setAttribute('width', '60');
+      item.setAttribute('height', '40');
+      item.setAttribute('rx', '4');
+      item.setAttribute('x', i * 250 - 100);
+      item.setAttribute('y', conveyorY);
+      conveyorSystem.appendChild(item);
+      conveyorItems.push({ element: item, x: i * 250 - 100 });
+    }
+
+    // Conveyor track
+    const track = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    track.setAttribute('class', 'conveyor');
+    track.setAttribute('x1', '0');
+    track.setAttribute('y1', conveyorY + 50);
+    track.setAttribute('x2', '1920');
+    track.setAttribute('y2', conveyorY + 50);
+    conveyorSystem.appendChild(track);
+
+    // Pistons
+    const pistons = [
+      { x: 300, y: 150, length: 80 },
+      { x: 1620, y: 150, length: 80 },
+    ];
+
+    pistons.forEach((piston, i) => {
+      const rod = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rod.setAttribute('class', 'piston-rod');
+      rod.setAttribute('id', `piston-rod-${i}`);
+      rod.setAttribute('width', '20');
+      rod.setAttribute('height', piston.length);
+      rod.setAttribute('x', piston.x - 10);
+      rod.setAttribute('y', piston.y);
+      rod.setAttribute('rx', '2');
+
+      const head = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      head.setAttribute('class', 'piston-head');
+      head.setAttribute('id', `piston-head-${i}`);
+      head.setAttribute('width', '50');
+      head.setAttribute('height', '20');
+      head.setAttribute('x', piston.x - 25);
+      head.setAttribute('y', piston.y + piston.length);
+      head.setAttribute('rx', '4');
+
+      pistonSystem.appendChild(rod);
+      pistonSystem.appendChild(head);
+    });
+
+    // Connection lines between gears
+    const connections = [
+      [0, 1], [0, 2], [0, 3], [0, 4],
+      [1, 5], [2, 6], [3, 7], [4, 8],
+      [9, 0], [10, 0]
+    ];
+
+    connections.forEach(([a, b]) => {
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', gears[a].cx);
+      line.setAttribute('y1', gears[a].cy);
+      line.setAttribute('x2', gears[b].cx);
+      line.setAttribute('y2', gears[b].cy);
+      line.setAttribute('stroke', 'rgba(20, 184, 166, 0.1)');
+      line.setAttribute('stroke-width', '1');
+      line.setAttribute('stroke-dasharray', '4,4');
+      connectionLines.appendChild(line);
+    });
+
+    // Scroll tracking
+    let ticking = false;
+
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const newScrollY = window.scrollY;
+          scrollVelocity = (newScrollY - lastScrollY);
+          lastScrollY = newScrollY;
+          scrollY = newScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+
+    // Animation loop
+    function animate() {
+      // Decay velocity
+      scrollVelocity *= 0.95;
+
+      // Add to rotation based on velocity
+      rotation += scrollVelocity * 0.1;
+
+      // Update gears
+      gears.forEach((gear, i) => {
+        const gearEl = document.getElementById(`gear-${i}`);
+        const rot = rotation * gear.speed * gear.direction;
+        gearEl.setAttribute('transform', `translate(${gear.cx}, ${gear.cy}) rotate(${rot})`);
+      });
+
+      // Update conveyor items
+      conveyorItems.forEach((item, i) => {
+        item.x += scrollVelocity * 0.5;
+        // Loop around
+        if (item.x > 2000) item.x = -100;
+        if (item.x < -100) item.x = 2000;
+        item.element.setAttribute('x', item.x);
+      });
+
+      // Update pistons
+      pistons.forEach((piston, i) => {
+        const offset = Math.sin(rotation * 0.05 + i * Math.PI) * 30;
+        const rod = document.getElementById(`piston-rod-${i}`);
+        const head = document.getElementById(`piston-head-${i}`);
+
+        rod.setAttribute('height', piston.length + offset);
+        head.setAttribute('y', piston.y + piston.length + offset);
+      });
+
+      // Update stats
+      const rpm = Math.abs(scrollVelocity * 6).toFixed(0);
+      const vel = Math.abs(scrollVelocity * 0.1).toFixed(1);
+      rpmValue.textContent = rpm;
+      velocityValue.textContent = vel;
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

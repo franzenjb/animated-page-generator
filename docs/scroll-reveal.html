@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scroll Reveal</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: #080808;
+      font-family: 'Inter', sans-serif;
+      color: #fafafa;
+      cursor: crosshair;
+    }
+
+    .section {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 60px 40px;
+    }
+
+    .word-container {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .word {
+      font-size: clamp(48px, 15vw, 200px);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 0.9;
+      opacity: 0;
+      transform: translateY(100%);
+      transition: none;
+    }
+
+    .word.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .word .char {
+      display: inline-block;
+      transition: transform 0.15s ease-out;
+    }
+
+    .subtext {
+      position: absolute;
+      bottom: -40px;
+      left: 0;
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #333;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .subtext.revealed {
+      opacity: 1;
+      transform: translateY(0);
+      transition: all 0.6s ease 0.4s;
+    }
+
+    /* Section specific colors */
+    .section:nth-child(1) .word { color: #fafafa; }
+    .section:nth-child(2) .word { color: #666; }
+    .section:nth-child(3) .word {
+      background: linear-gradient(135deg, #444 0%, #888 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .section:nth-child(4) .word { color: #333; }
+    .section:nth-child(5) .word { color: #fafafa; }
+
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #333 0%, #666 100%);
+      z-index: 100;
+      transform-origin: left;
+      transform: scaleX(0);
+    }
+
+    .scroll-hint {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #333;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+
+    .scroll-hint.hidden {
+      opacity: 0;
+    }
+
+    .cursor-follower {
+      position: fixed;
+      width: 120px;
+      height: 120px;
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 50;
+      transition: transform 0.1s ease-out, opacity 0.3s ease;
+      opacity: 0;
+    }
+
+    body:hover .cursor-follower {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="progress-bar" id="progress"></div>
+  <div class="cursor-follower" id="cursor"></div>
+
+  <section class="section">
+    <div class="word-container">
+      <div class="word" data-text="OBSERVE">OBSERVE</div>
+      <div class="subtext">scroll to continue</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="word-container">
+      <div class="word" data-text="PROCESS">PROCESS</div>
+      <div class="subtext">information flows</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="word-container">
+      <div class="word" data-text="TRANSFORM">TRANSFORM</div>
+      <div class="subtext">evolution in motion</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="word-container">
+      <div class="word" data-text="EMERGE">EMERGE</div>
+      <div class="subtext">becoming visible</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="word-container">
+      <div class="word" data-text="COMPLETE">COMPLETE</div>
+      <div class="subtext">the cycle continues</div>
+    </div>
+  </section>
+
+  <div class="scroll-hint" id="scrollHint">Scroll</div>
+
+  <script>
+    const words = document.querySelectorAll('.word');
+    const subtexts = document.querySelectorAll('.subtext');
+    const progress = document.getElementById('progress');
+    const scrollHint = document.getElementById('scrollHint');
+    const cursor = document.getElementById('cursor');
+
+    let mouseX = 0, mouseY = 0;
+    let cursorX = 0, cursorY = 0;
+
+    // Split words into characters
+    words.forEach(word => {
+      const text = word.textContent;
+      word.innerHTML = text.split('').map((char, i) =>
+        `<span class="char" data-index="${i}">${char}</span>`
+      ).join('');
+    });
+
+    // Mouse tracking
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+
+      // Character distortion based on mouse
+      document.querySelectorAll('.word.revealed .char').forEach(char => {
+        const rect = char.getBoundingClientRect();
+        const charX = rect.left + rect.width / 2;
+        const charY = rect.top + rect.height / 2;
+
+        const dx = mouseX - charX;
+        const dy = mouseY - charY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const maxDist = 200;
+
+        if (dist < maxDist) {
+          const force = (1 - dist / maxDist) * 0.5;
+          const moveX = -dx * force * 0.15;
+          const moveY = -dy * force * 0.1;
+          char.style.transform = `translate(${moveX}px, ${moveY}px)`;
+        } else {
+          char.style.transform = 'translate(0, 0)';
+        }
+      });
+    });
+
+    // Cursor animation
+    function animateCursor() {
+      cursorX += (mouseX - cursorX) * 0.08;
+      cursorY += (mouseY - cursorY) * 0.08;
+      cursor.style.left = cursorX - 60 + 'px';
+      cursor.style.top = cursorY - 60 + 'px';
+      requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+
+    // Scroll handling
+    function onScroll() {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollPercent = scrollTop / docHeight;
+
+      // Progress bar
+      progress.style.transform = `scaleX(${scrollPercent})`;
+
+      // Hide scroll hint
+      if (scrollTop > 100) {
+        scrollHint.classList.add('hidden');
+      } else {
+        scrollHint.classList.remove('hidden');
+      }
+
+      // Reveal words
+      words.forEach((word, i) => {
+        const section = word.closest('.section');
+        const rect = section.getBoundingClientRect();
+        const sectionCenter = rect.top + rect.height / 2;
+        const viewportCenter = window.innerHeight / 2;
+        const distance = Math.abs(sectionCenter - viewportCenter);
+
+        if (distance < window.innerHeight * 0.4) {
+          // Animate in
+          if (!word.classList.contains('revealed')) {
+            word.classList.add('revealed');
+            subtexts[i].classList.add('revealed');
+
+            // Stagger character animation
+            const chars = word.querySelectorAll('.char');
+            chars.forEach((char, ci) => {
+              char.style.opacity = '0';
+              char.style.transform = 'translateY(60px) rotate(10deg)';
+
+              setTimeout(() => {
+                char.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                char.style.opacity = '1';
+                char.style.transform = 'translateY(0) rotate(0deg)';
+              }, ci * 40);
+            });
+          }
+        }
+      });
+    }
+
+    window.addEventListener('scroll', onScroll);
+    onScroll(); // Initial check
+
+    // Smooth entrance
+    document.body.style.opacity = '0';
+    setTimeout(() => {
+      document.body.style.transition = 'opacity 0.8s ease';
+      document.body.style.opacity = '1';
+    }, 100);
+  </script>
+</body>
+</html>

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editorial Scroll</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: #f8f6f3;
+      font-family: 'Inter', sans-serif;
+      color: #1a1a1a;
+      cursor: crosshair;
+    }
+
+    .cursor {
+      position: fixed;
+      width: 12px;
+      height: 12px;
+      background: #1a1a1a;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 1000;
+      mix-blend-mode: difference;
+      transition: transform 0.1s ease;
+    }
+
+    .cursor.hover {
+      transform: scale(4);
+    }
+
+    /* Hero */
+    .hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 60px 10vw;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-label {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #999;
+      margin-bottom: 30px;
+    }
+
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(48px, 10vw, 140px);
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      margin-bottom: 40px;
+    }
+
+    .hero-title .line {
+      display: block;
+      overflow: hidden;
+    }
+
+    .hero-title .word {
+      display: inline-block;
+      transform: translateY(100%);
+      opacity: 0;
+    }
+
+    .hero-subtitle {
+      font-size: 16px;
+      font-weight: 300;
+      color: #666;
+      max-width: 400px;
+      line-height: 1.7;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: 40px;
+      left: 10vw;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #999;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .scroll-indicator::before {
+      content: '';
+      width: 40px;
+      height: 1px;
+      background: #ccc;
+    }
+
+    /* Image sections */
+    .image-section {
+      position: relative;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .parallax-image {
+      position: absolute;
+      top: -20%;
+      left: 0;
+      width: 100%;
+      height: 140%;
+      object-fit: cover;
+      will-change: transform;
+    }
+
+    .image-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 60%, rgba(248, 246, 243, 1) 100%);
+    }
+
+    .image-caption {
+      position: absolute;
+      bottom: 60px;
+      left: 10vw;
+      right: 10vw;
+    }
+
+    .image-caption h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(24px, 4vw, 48px);
+      font-weight: 400;
+      margin-bottom: 16px;
+      opacity: 0;
+      transform: translateY(40px);
+    }
+
+    .image-caption p {
+      font-size: 14px;
+      color: #666;
+      max-width: 500px;
+      line-height: 1.8;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    /* Text sections */
+    .text-section {
+      padding: 15vh 10vw;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .text-section.reverse {
+      direction: rtl;
+    }
+
+    .text-section.reverse > * {
+      direction: ltr;
+    }
+
+    .text-content {
+      max-width: 500px;
+    }
+
+    .text-number {
+      font-family: 'Playfair Display', serif;
+      font-size: 120px;
+      font-weight: 400;
+      color: #e8e6e3;
+      line-height: 1;
+      margin-bottom: -30px;
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+
+    .text-content h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(28px, 3vw, 40px);
+      font-weight: 400;
+      margin-bottom: 24px;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .text-content p {
+      font-size: 15px;
+      line-height: 1.9;
+      color: #555;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .text-image {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .text-image img {
+      width: 100%;
+      height: 60vh;
+      object-fit: cover;
+      transform: scale(1.2);
+      opacity: 0;
+      transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease;
+    }
+
+    .text-image.revealed img {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    /* Quote section */
+    .quote-section {
+      padding: 20vh 10vw;
+      text-align: center;
+    }
+
+    .quote {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(32px, 5vw, 64px);
+      font-weight: 400;
+      line-height: 1.3;
+      font-style: italic;
+      max-width: 900px;
+      margin: 0 auto 40px;
+      opacity: 0;
+    }
+
+    .quote-author {
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #999;
+      opacity: 0;
+    }
+
+    /* Final section */
+    .final-section {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1a1a1a;
+      color: #f8f6f3;
+    }
+
+    .final-content {
+      text-align: center;
+    }
+
+    .final-content h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(40px, 8vw, 100px);
+      font-weight: 400;
+      margin-bottom: 30px;
+      opacity: 0;
+      transform: scale(0.9);
+    }
+
+    .final-content p {
+      font-size: 14px;
+      color: #666;
+      opacity: 0;
+    }
+
+    /* Progress */
+    .progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 2px;
+      background: #1a1a1a;
+      z-index: 100;
+      transform-origin: left;
+      transform: scaleX(0);
+    }
+
+    @media (max-width: 768px) {
+      .text-section {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+      .text-section.reverse {
+        direction: ltr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="cursor" id="cursor"></div>
+  <div class="progress" id="progress"></div>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-label">Volume 01 / Architecture</div>
+    <h1 class="hero-title">
+      <span class="line"><span class="word">The Art of</span></span>
+      <span class="line"><span class="word">Empty Space</span></span>
+    </h1>
+    <p class="hero-subtitle">Exploring the philosophy of negative space in contemporary architecture and how absence defines presence.</p>
+    <div class="scroll-indicator">Scroll to explore</div>
+  </section>
+
+  <!-- Image 1 -->
+  <section class="image-section">
+    <img class="parallax-image" src="https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=1600&q=80" alt="Architecture">
+    <div class="image-overlay"></div>
+    <div class="image-caption">
+      <h2>Silence speaks louder than walls</h2>
+      <p>In Japanese architecture, the concept of "ma" refers to the void between structural parts. It is not empty space, but a pause full of possibilities.</p>
+    </div>
+  </section>
+
+  <!-- Text 1 -->
+  <section class="text-section">
+    <div class="text-content">
+      <div class="text-number">01</div>
+      <h3>The Void as Foundation</h3>
+      <p>Modern architecture often celebrates the solid, the massive, the imposing. But the masters understand that a building is defined as much by what is absent as by what is present. Light enters through absence. Movement flows through emptiness. Life inhabits the void.</p>
+    </div>
+    <div class="text-image">
+      <img src="https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=800&q=80" alt="Interior">
+    </div>
+  </section>
+
+  <!-- Quote -->
+  <section class="quote-section">
+    <blockquote class="quote">"Architecture is the learned game, correct and magnificent, of forms assembled in the light."</blockquote>
+    <cite class="quote-author">Le Corbusier</cite>
+  </section>
+
+  <!-- Image 2 -->
+  <section class="image-section">
+    <img class="parallax-image" src="https://images.unsplash.com/photo-1493397212122-2b85dda8106b?w=1600&q=80" alt="Modern Building">
+    <div class="image-overlay"></div>
+    <div class="image-caption">
+      <h2>Where shadow becomes form</h2>
+      <p>The interplay of solid and void creates rhythm. Each opening is a note, each wall a rest. The building breathes.</p>
+    </div>
+  </section>
+
+  <!-- Text 2 -->
+  <section class="text-section reverse">
+    <div class="text-content">
+      <div class="text-number">02</div>
+      <h3>Light as Material</h3>
+      <p>The architect's true medium is not concrete or steel, but light itself. Every aperture is a decision about how sunlight will carve through space, how shadows will define edges, how the passage of time will be written across surfaces.</p>
+    </div>
+    <div class="text-image">
+      <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80" alt="Light and Shadow">
+    </div>
+  </section>
+
+  <!-- Text 3 -->
+  <section class="text-section">
+    <div class="text-content">
+      <div class="text-number">03</div>
+      <h3>Inhabiting Absence</h3>
+      <p>We do not live in walls. We live in the spaces between them. The architect's task is to shape absence, to give form to emptiness, to make the invisible visible through the careful arrangement of the solid.</p>
+    </div>
+    <div class="text-image">
+      <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80" alt="Modern Interior">
+    </div>
+  </section>
+
+  <!-- Final -->
+  <section class="final-section">
+    <div class="final-content">
+      <h2>Space is breath</h2>
+      <p>Continue exploring</p>
+    </div>
+  </section>
+
+  <script>
+    const cursor = document.getElementById('cursor');
+    const progress = document.getElementById('progress');
+
+    let mouseX = 0, mouseY = 0;
+    let cursorX = 0, cursorY = 0;
+
+    // Cursor animation
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    function animateCursor() {
+      cursorX += (mouseX - cursorX) * 0.15;
+      cursorY += (mouseY - cursorY) * 0.15;
+      cursor.style.left = cursorX - 6 + 'px';
+      cursor.style.top = cursorY - 6 + 'px';
+      requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+
+    // Hover effects
+    document.querySelectorAll('a, button, .text-image').forEach(el => {
+      el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+      el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+    });
+
+    // Hero animation
+    function animateHero() {
+      const words = document.querySelectorAll('.hero-title .word');
+      const subtitle = document.querySelector('.hero-subtitle');
+
+      words.forEach((word, i) => {
+        setTimeout(() => {
+          word.style.transition = 'all 1s cubic-bezier(0.16, 1, 0.3, 1)';
+          word.style.transform = 'translateY(0)';
+          word.style.opacity = '1';
+        }, 200 + i * 150);
+      });
+
+      setTimeout(() => {
+        subtitle.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+        subtitle.style.transform = 'translateY(0)';
+        subtitle.style.opacity = '1';
+      }, 600);
+    }
+
+    // Parallax images
+    const parallaxImages = document.querySelectorAll('.parallax-image');
+
+    function updateParallax() {
+      parallaxImages.forEach(img => {
+        const section = img.parentElement;
+        const rect = section.getBoundingClientRect();
+        const scrolled = (window.innerHeight - rect.top) / (window.innerHeight + rect.height);
+        const yOffset = (scrolled - 0.5) * 100;
+        img.style.transform = `translateY(${yOffset}px)`;
+      });
+    }
+
+    // Scroll-triggered animations
+    function checkScroll() {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      progress.style.transform = `scaleX(${scrollTop / docHeight})`;
+
+      // Image captions
+      document.querySelectorAll('.image-caption').forEach(caption => {
+        const rect = caption.getBoundingClientRect();
+        if (rect.top < window.innerHeight * 0.8) {
+          const h2 = caption.querySelector('h2');
+          const p = caption.querySelector('p');
+          h2.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+          h2.style.opacity = '1';
+          h2.style.transform = 'translateY(0)';
+          setTimeout(() => {
+            p.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+            p.style.opacity = '1';
+            p.style.transform = 'translateY(0)';
+          }, 200);
+        }
+      });
+
+      // Text sections
+      document.querySelectorAll('.text-section').forEach(section => {
+        const rect = section.getBoundingClientRect();
+        if (rect.top < window.innerHeight * 0.7) {
+          const number = section.querySelector('.text-number');
+          const h3 = section.querySelector('h3');
+          const p = section.querySelector('.text-content p');
+          const imageBox = section.querySelector('.text-image');
+
+          if (number) {
+            number.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+            number.style.opacity = '1';
+            number.style.transform = 'translateX(0)';
+          }
+
+          setTimeout(() => {
+            h3.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+            h3.style.opacity = '1';
+            h3.style.transform = 'translateY(0)';
+          }, 100);
+
+          setTimeout(() => {
+            p.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+            p.style.opacity = '1';
+            p.style.transform = 'translateY(0)';
+          }, 200);
+
+          if (imageBox) {
+            imageBox.classList.add('revealed');
+          }
+        }
+      });
+
+      // Quote
+      const quote = document.querySelector('.quote');
+      const author = document.querySelector('.quote-author');
+      const quoteRect = quote.getBoundingClientRect();
+      if (quoteRect.top < window.innerHeight * 0.7) {
+        quote.style.transition = 'all 1s cubic-bezier(0.16, 1, 0.3, 1)';
+        quote.style.opacity = '1';
+        setTimeout(() => {
+          author.style.transition = 'all 0.6s ease';
+          author.style.opacity = '1';
+        }, 400);
+      }
+
+      // Final section
+      const final = document.querySelector('.final-content');
+      const finalRect = final.getBoundingClientRect();
+      if (finalRect.top < window.innerHeight * 0.8) {
+        const h2 = final.querySelector('h2');
+        const p = final.querySelector('p');
+        h2.style.transition = 'all 1s cubic-bezier(0.16, 1, 0.3, 1)';
+        h2.style.opacity = '1';
+        h2.style.transform = 'scale(1)';
+        setTimeout(() => {
+          p.style.transition = 'all 0.6s ease';
+          p.style.opacity = '1';
+        }, 300);
+      }
+
+      updateParallax();
+    }
+
+    window.addEventListener('scroll', checkScroll);
+    window.addEventListener('resize', checkScroll);
+
+    // Init
+    setTimeout(animateHero, 300);
+    checkScroll();
+  </script>
+</body>
+</html>

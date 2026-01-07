@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bento Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/style.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-mono/style.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <style>
+    :root {
+      --realie-bg: #181b1b;
+      --realie-bg-elevated: #1e2222;
+      --realie-accent: #0d4a47;
+      --realie-accent-glow: #14b8a6;
+      --realie-text: #ede9fe;
+      --realie-text-muted: #71717a;
+      --realie-border: rgba(237, 233, 254, 0.06);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--realie-bg);
+      min-height: 100vh;
+      font-family: 'Geist', system-ui, sans-serif;
+      color: var(--realie-text);
+      padding: 30px;
+      overflow-x: hidden;
+    }
+
+    .back-link {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      color: var(--realie-text-muted);
+      text-decoration: none;
+      z-index: 100;
+      padding: 8px 16px;
+      border: 1px solid rgba(237, 233, 254, 0.1);
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .back-link:hover {
+      color: var(--realie-accent-glow);
+      border-color: var(--realie-accent-glow);
+    }
+
+    .header {
+      margin-bottom: 40px;
+      padding-top: 20px;
+    }
+
+    .header-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--realie-accent-glow);
+      margin-bottom: 8px;
+    }
+
+    .header-title {
+      font-size: 32px;
+      font-weight: 300;
+      color: var(--realie-text);
+      letter-spacing: -0.02em;
+    }
+
+    /* Bento Grid */
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(3, 200px);
+      gap: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Bento Card */
+    .bento-card {
+      background: var(--realie-bg-elevated);
+      border: 1px solid var(--realie-border);
+      border-radius: 16px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .bento-card:hover {
+      transform: translateY(-4px) scale(1);
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
+    }
+
+    .bento-card.revealed {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Card spans */
+    .span-2-col { grid-column: span 2; }
+    .span-2-row { grid-row: span 2; }
+
+    /* Skeleton loading */
+    .skeleton {
+      background: linear-gradient(
+        90deg,
+        var(--realie-bg) 0%,
+        var(--realie-bg-elevated) 50%,
+        var(--realie-bg) 100%
+      );
+      background-size: 200% 100%;
+      animation: skeleton-pulse 1.5s ease-in-out infinite;
+      border-radius: 6px;
+    }
+
+    @keyframes skeleton-pulse {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .skeleton-text {
+      height: 12px;
+      margin-bottom: 8px;
+    }
+
+    .skeleton-title {
+      height: 24px;
+      width: 60%;
+      margin-bottom: 16px;
+    }
+
+    .skeleton-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+    }
+
+    /* Card label */
+    .card-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--realie-text-muted);
+      margin-bottom: 12px;
+    }
+
+    /* Big stat */
+    .stat-big {
+      font-family: 'Geist Mono', monospace;
+      font-size: 48px;
+      font-weight: 300;
+      color: var(--realie-text);
+      line-height: 1;
+    }
+
+    .stat-change {
+      font-family: 'Geist Mono', monospace;
+      font-size: 12px;
+      color: var(--realie-accent-glow);
+      margin-top: 8px;
+    }
+
+    .stat-change.negative {
+      color: #f87171;
+    }
+
+    /* Progress ring */
+    .progress-ring {
+      width: 120px;
+      height: 120px;
+      position: relative;
+    }
+
+    .progress-ring svg {
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring-bg {
+      fill: none;
+      stroke: var(--realie-border);
+      stroke-width: 8;
+    }
+
+    .progress-ring-fill {
+      fill: none;
+      stroke: var(--realie-accent-glow);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 314;
+      stroke-dashoffset: 314;
+      transition: stroke-dashoffset 1.5s ease-out;
+    }
+
+    .progress-value {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Geist Mono', monospace;
+      font-size: 24px;
+      color: var(--realie-text);
+    }
+
+    /* Mini chart */
+    .mini-chart {
+      height: 60px;
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      margin-top: auto;
+    }
+
+    .chart-bar {
+      flex: 1;
+      background: var(--realie-accent);
+      border-radius: 2px;
+      min-height: 4px;
+      transform-origin: bottom;
+      transform: scaleY(0);
+      transition: transform 0.6s ease-out;
+    }
+
+    .chart-bar.active {
+      background: var(--realie-accent-glow);
+    }
+
+    /* Status list */
+    .status-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      height: 100%;
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--realie-bg);
+      border-radius: 8px;
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--realie-accent-glow);
+      box-shadow: 0 0 10px var(--realie-accent-glow);
+    }
+
+    .status-dot.warning { background: #fbbf24; box-shadow: 0 0 10px #fbbf24; }
+    .status-dot.error { background: #f87171; box-shadow: 0 0 10px #f87171; }
+
+    .status-text {
+      flex: 1;
+      font-size: 13px;
+      color: var(--realie-text-muted);
+    }
+
+    .status-value {
+      font-family: 'Geist Mono', monospace;
+      font-size: 12px;
+      color: var(--realie-text);
+    }
+
+    /* Line chart */
+    .line-chart {
+      height: 100%;
+      width: 100%;
+      position: relative;
+    }
+
+    .line-chart svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .chart-line {
+      fill: none;
+      stroke: var(--realie-accent-glow);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-dasharray: 500;
+      stroke-dashoffset: 500;
+      transition: stroke-dashoffset 2s ease-out;
+    }
+
+    .chart-area {
+      fill: url(#chart-gradient);
+      opacity: 0;
+      transition: opacity 1s ease-out 0.5s;
+    }
+
+    .chart-dot {
+      fill: var(--realie-accent-glow);
+      opacity: 0;
+      transform-origin: center;
+      transform: scale(0);
+      transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    }
+
+    /* Gradient divider */
+    .gradient-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--realie-accent-glow), transparent);
+      margin: 16px 0;
+      opacity: 0.3;
+    }
+
+    /* Activity feed */
+    .activity-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 12px;
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    .activity-time {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      color: var(--realie-text-muted);
+      white-space: nowrap;
+    }
+
+    .activity-content {
+      font-size: 13px;
+      color: var(--realie-text);
+      line-height: 1.4;
+    }
+
+    .activity-content strong {
+      color: var(--realie-accent-glow);
+    }
+
+    /* Icon circle */
+    .icon-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--realie-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    @media (max-width: 1200px) {
+      .bento-grid {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: auto;
+      }
+      .span-2-row { grid-row: span 1; }
+    }
+
+    @media (max-width: 768px) {
+      .bento-grid {
+        grid-template-columns: 1fr;
+      }
+      .span-2-col { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">Back to Showcase</a>
+
+  <header class="header">
+    <div class="header-label">ULTRAHARD 14</div>
+    <h1 class="header-title">Bento Dashboard</h1>
+  </header>
+
+  <div class="bento-grid">
+    <!-- Big stat card -->
+    <div class="bento-card" data-delay="0">
+      <div class="card-label">Total Revenue</div>
+      <div class="stat-big" data-count="847392">$0</div>
+      <div class="stat-change">+12.5% from last month</div>
+    </div>
+
+    <!-- Progress ring card -->
+    <div class="bento-card" data-delay="100">
+      <div class="card-label">Goal Progress</div>
+      <div class="progress-ring" data-progress="73">
+        <svg viewBox="0 0 120 120">
+          <circle class="progress-ring-bg" cx="60" cy="60" r="50"/>
+          <circle class="progress-ring-fill" cx="60" cy="60" r="50"/>
+        </svg>
+        <div class="progress-value">0%</div>
+      </div>
+    </div>
+
+    <!-- Line chart - spans 2 cols -->
+    <div class="bento-card span-2-col" data-delay="200">
+      <div class="card-label">Performance Trend</div>
+      <div class="line-chart">
+        <svg viewBox="0 0 400 120" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" style="stop-color:rgba(20, 184, 166, 0.3)"/>
+              <stop offset="100%" style="stop-color:rgba(20, 184, 166, 0)"/>
+            </linearGradient>
+          </defs>
+          <path class="chart-area" d="M0,100 L0,80 Q50,60 100,70 T200,50 T300,65 T400,30 L400,100 Z"/>
+          <path class="chart-line" d="M0,80 Q50,60 100,70 T200,50 T300,65 T400,30"/>
+          <circle class="chart-dot" cx="100" cy="70" r="4"/>
+          <circle class="chart-dot" cx="200" cy="50" r="4"/>
+          <circle class="chart-dot" cx="300" cy="65" r="4"/>
+          <circle class="chart-dot" cx="400" cy="30" r="4"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Status list - spans 2 rows -->
+    <div class="bento-card span-2-row" data-delay="300">
+      <div class="card-label">System Status</div>
+      <div class="status-list">
+        <div class="status-item">
+          <div class="status-dot"></div>
+          <span class="status-text">API Gateway</span>
+          <span class="status-value">99.9%</span>
+        </div>
+        <div class="status-item">
+          <div class="status-dot"></div>
+          <span class="status-text">Database Cluster</span>
+          <span class="status-value">100%</span>
+        </div>
+        <div class="status-item">
+          <div class="status-dot warning"></div>
+          <span class="status-text">Cache Layer</span>
+          <span class="status-value">87.3%</span>
+        </div>
+        <div class="status-item">
+          <div class="status-dot"></div>
+          <span class="status-text">CDN Network</span>
+          <span class="status-value">100%</span>
+        </div>
+        <div class="status-item">
+          <div class="status-dot error"></div>
+          <span class="status-text">ML Pipeline</span>
+          <span class="status-value">45.2%</span>
+        </div>
+        <div class="status-item">
+          <div class="status-dot"></div>
+          <span class="status-text">Storage Nodes</span>
+          <span class="status-value">98.7%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bar chart card -->
+    <div class="bento-card" data-delay="400">
+      <div class="card-label">Weekly Activity</div>
+      <div class="mini-chart">
+        <div class="chart-bar" style="--height: 40%"></div>
+        <div class="chart-bar" style="--height: 65%"></div>
+        <div class="chart-bar" style="--height: 45%"></div>
+        <div class="chart-bar" style="--height: 80%"></div>
+        <div class="chart-bar active" style="--height: 100%"></div>
+        <div class="chart-bar" style="--height: 70%"></div>
+        <div class="chart-bar" style="--height: 55%"></div>
+      </div>
+    </div>
+
+    <!-- Users stat -->
+    <div class="bento-card" data-delay="500">
+      <div class="card-label">Active Users</div>
+      <div class="stat-big" data-count="2847">0</div>
+      <div class="stat-change negative">-3.2% from yesterday</div>
+    </div>
+
+    <!-- Conversion stat -->
+    <div class="bento-card" data-delay="600">
+      <div class="card-label">Conversion Rate</div>
+      <div class="stat-big" data-count="4.7" data-suffix="%">0%</div>
+      <div class="stat-change">+0.8% improvement</div>
+    </div>
+
+    <!-- Activity feed - spans 2 cols -->
+    <div class="bento-card span-2-col" data-delay="700">
+      <div class="card-label">Recent Activity</div>
+      <div class="activity-feed">
+        <div class="activity-item">
+          <span class="activity-time">2m ago</span>
+          <span class="activity-content"><strong>Sarah Chen</strong> deployed version 2.4.1 to production</span>
+        </div>
+        <div class="activity-item">
+          <span class="activity-time">15m ago</span>
+          <span class="activity-content"><strong>ML Pipeline</strong> completed training cycle #847</span>
+        </div>
+        <div class="activity-item">
+          <span class="activity-time">1h ago</span>
+          <span class="activity-content"><strong>Alert:</strong> Cache hit ratio dropped below threshold</span>
+        </div>
+        <div class="activity-item">
+          <span class="activity-time">3h ago</span>
+          <span class="activity-content"><strong>System</strong> auto-scaled to 12 instances</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Reveal cards with stagger
+    const cards = document.querySelectorAll('.bento-card');
+
+    cards.forEach((card, i) => {
+      const delay = parseInt(card.dataset.delay) || i * 100;
+
+      setTimeout(() => {
+        card.classList.add('revealed');
+
+        // Animate specific content
+        animateCardContent(card);
+      }, 500 + delay);
+    });
+
+    function animateCardContent(card) {
+      // Animate stat counters
+      const statBig = card.querySelector('.stat-big[data-count]');
+      if (statBig) {
+        const target = parseFloat(statBig.dataset.count);
+        const suffix = statBig.dataset.suffix || '';
+        const isDecimal = target % 1 !== 0;
+        const isCurrency = statBig.textContent.includes('$');
+
+        gsap.to({ val: 0 }, {
+          val: target,
+          duration: 2,
+          ease: 'power2.out',
+          onUpdate: function() {
+            const val = this.targets()[0].val;
+            let formatted = isDecimal ? val.toFixed(1) : Math.round(val).toLocaleString();
+            statBig.textContent = (isCurrency ? '$' : '') + formatted + suffix;
+          }
+        });
+      }
+
+      // Animate progress ring
+      const progressRing = card.querySelector('.progress-ring');
+      if (progressRing) {
+        const progress = parseInt(progressRing.dataset.progress);
+        const fill = progressRing.querySelector('.progress-ring-fill');
+        const value = progressRing.querySelector('.progress-value');
+
+        const circumference = 314; // 2 * PI * 50
+        const offset = circumference - (progress / 100) * circumference;
+
+        setTimeout(() => {
+          fill.style.strokeDashoffset = offset;
+        }, 200);
+
+        gsap.to({ val: 0 }, {
+          val: progress,
+          duration: 1.5,
+          ease: 'power2.out',
+          delay: 0.2,
+          onUpdate: function() {
+            value.textContent = Math.round(this.targets()[0].val) + '%';
+          }
+        });
+      }
+
+      // Animate bar chart
+      const bars = card.querySelectorAll('.chart-bar');
+      bars.forEach((bar, i) => {
+        const height = bar.style.getPropertyValue('--height');
+        setTimeout(() => {
+          bar.style.transform = `scaleY(${parseFloat(height) / 100})`;
+        }, i * 100);
+      });
+
+      // Animate line chart
+      const chartLine = card.querySelector('.chart-line');
+      const chartArea = card.querySelector('.chart-area');
+      const chartDots = card.querySelectorAll('.chart-dot');
+
+      if (chartLine) {
+        setTimeout(() => {
+          chartLine.style.strokeDashoffset = '0';
+        }, 300);
+      }
+
+      if (chartArea) {
+        setTimeout(() => {
+          chartArea.style.opacity = '1';
+        }, 800);
+      }
+
+      chartDots.forEach((dot, i) => {
+        setTimeout(() => {
+          dot.style.opacity = '1';
+          dot.style.transform = 'scale(1)';
+        }, 1000 + i * 150);
+      });
+
+      // Animate status items
+      const statusItems = card.querySelectorAll('.status-item');
+      statusItems.forEach((item, i) => {
+        setTimeout(() => {
+          item.style.opacity = '1';
+          item.style.transform = 'translateX(0)';
+          item.style.transition = 'all 0.4s ease-out';
+        }, i * 100);
+      });
+
+      // Animate activity items
+      const activityItems = card.querySelectorAll('.activity-item');
+      activityItems.forEach((item, i) => {
+        setTimeout(() => {
+          item.style.opacity = '1';
+          item.style.transform = 'translateY(0)';
+          item.style.transition = 'all 0.4s ease-out';
+        }, i * 150);
+      });
+    }
+  </script>
+</body>
+</html>

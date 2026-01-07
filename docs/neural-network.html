@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neural Network</title>
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/style.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-mono/style.css" rel="stylesheet">
+  <style>
+    :root {
+      --realie-bg: #181b1b;
+      --realie-accent: #0d4a47;
+      --realie-accent-glow: #14b8a6;
+      --realie-text: #ede9fe;
+      --realie-text-muted: #71717a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--realie-bg);
+      min-height: 100vh;
+      font-family: 'Geist', system-ui, sans-serif;
+      color: var(--realie-text);
+      overflow: hidden;
+    }
+
+    #canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+    }
+
+    .ui {
+      position: fixed;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .ui-top {
+      top: 30px;
+      left: 30px;
+    }
+
+    .ui-bottom {
+      bottom: 30px;
+      left: 30px;
+      right: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--realie-text-muted);
+      margin-bottom: 8px;
+    }
+
+    .title {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--realie-accent-glow);
+    }
+
+    .hint {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      color: var(--realie-text-muted);
+      text-align: right;
+      line-height: 1.6;
+    }
+
+    .stats {
+      display: flex;
+      gap: 40px;
+    }
+
+    .stat-item {
+      text-align: left;
+    }
+
+    .stat-value {
+      font-family: 'Geist Mono', monospace;
+      font-size: 32px;
+      font-weight: 300;
+      color: var(--realie-text);
+      opacity: 0.5;
+    }
+
+    .stat-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 9px;
+      color: var(--realie-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 4px;
+    }
+
+    .back-link {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      color: var(--realie-text-muted);
+      text-decoration: none;
+      z-index: 100;
+      padding: 8px 16px;
+      border: 1px solid rgba(237, 233, 254, 0.1);
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      pointer-events: auto;
+    }
+
+    .back-link:hover {
+      color: var(--realie-accent-glow);
+      border-color: var(--realie-accent-glow);
+    }
+
+    /* Data flow indicators */
+    .data-pulse {
+      position: fixed;
+      width: 4px;
+      height: 4px;
+      background: var(--realie-accent-glow);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 5;
+      box-shadow: 0 0 10px var(--realie-accent-glow);
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">Back to Showcase</a>
+  <canvas id="canvas"></canvas>
+
+  <div class="ui ui-top">
+    <div class="label">ULTRAHARD 11</div>
+    <div class="title">Neural Network</div>
+  </div>
+
+  <div class="ui ui-bottom">
+    <div class="stats">
+      <div class="stat-item">
+        <div class="stat-value" id="nodeCount">0</div>
+        <div class="stat-label">Nodes</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="connectionCount">0</div>
+        <div class="stat-label">Connections</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="dataFlow">0</div>
+        <div class="stat-label">Data/sec</div>
+      </div>
+    </div>
+    <div class="hint">
+      Move to attract nodes<br>
+      Click to spawn cluster
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    // Stats elements
+    const nodeCountEl = document.getElementById('nodeCount');
+    const connectionCountEl = document.getElementById('connectionCount');
+    const dataFlowEl = document.getElementById('dataFlow');
+
+    // Mouse state
+    const mouse = {
+      x: width / 2,
+      y: height / 2,
+      radius: 200
+    };
+
+    // Node class with spring physics
+    class Node {
+      constructor(x, y, layer = 0) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * 2;
+        this.vy = (Math.random() - 0.5) * 2;
+        this.radius = 2 + Math.random() * 3;
+        this.baseRadius = this.radius;
+        this.layer = layer;
+        this.activation = Math.random();
+        this.activationTarget = Math.random();
+        this.pulsePhase = Math.random() * Math.PI * 2;
+        this.connections = [];
+      }
+
+      update() {
+        // Spring physics toward mouse
+        const dx = mouse.x - this.x;
+        const dy = mouse.y - this.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < mouse.radius) {
+          const force = (mouse.radius - dist) / mouse.radius * 0.02;
+          this.vx += dx * force;
+          this.vy += dy * force;
+        }
+
+        // Gentle random drift
+        this.vx += (Math.random() - 0.5) * 0.1;
+        this.vy += (Math.random() - 0.5) * 0.1;
+
+        // Damping
+        this.vx *= 0.98;
+        this.vy *= 0.98;
+
+        // Update position
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Boundary bounce
+        if (this.x < 50) { this.x = 50; this.vx *= -0.8; }
+        if (this.x > width - 50) { this.x = width - 50; this.vx *= -0.8; }
+        if (this.y < 50) { this.y = 50; this.vy *= -0.8; }
+        if (this.y > height - 50) { this.y = height - 50; this.vy *= -0.8; }
+
+        // Activation animation
+        this.activation += (this.activationTarget - this.activation) * 0.05;
+        if (Math.random() < 0.01) {
+          this.activationTarget = Math.random();
+        }
+
+        // Pulse
+        this.pulsePhase += 0.03;
+        this.radius = this.baseRadius + Math.sin(this.pulsePhase) * 0.5;
+      }
+
+      draw() {
+        const glowIntensity = this.activation * 0.5 + 0.2;
+
+        // Outer glow
+        const gradient = ctx.createRadialGradient(
+          this.x, this.y, 0,
+          this.x, this.y, this.radius * 4
+        );
+        gradient.addColorStop(0, `rgba(20, 184, 166, ${glowIntensity * 0.5})`);
+        gradient.addColorStop(1, 'rgba(20, 184, 166, 0)');
+
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius * 4, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // Core
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(237, 233, 254, ${0.6 + this.activation * 0.4})`;
+        ctx.fill();
+      }
+    }
+
+    // Connection class
+    class Connection {
+      constructor(nodeA, nodeB) {
+        this.nodeA = nodeA;
+        this.nodeB = nodeB;
+        this.strength = Math.random();
+        this.dataFlow = 0;
+        this.flowDirection = Math.random() > 0.5 ? 1 : -1;
+        this.flowPosition = Math.random();
+        this.flowSpeed = 0.01 + Math.random() * 0.02;
+      }
+
+      update() {
+        // Animate data flow
+        this.flowPosition += this.flowSpeed * this.flowDirection;
+        if (this.flowPosition > 1) {
+          this.flowPosition = 0;
+          this.dataFlow++;
+        }
+        if (this.flowPosition < 0) {
+          this.flowPosition = 1;
+          this.dataFlow++;
+        }
+
+        // Update strength based on activation
+        this.strength = (this.nodeA.activation + this.nodeB.activation) / 2;
+      }
+
+      draw() {
+        const dx = this.nodeB.x - this.nodeA.x;
+        const dy = this.nodeB.y - this.nodeA.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        // Only draw if close enough
+        if (dist > 250) return false;
+
+        const opacity = (1 - dist / 250) * this.strength * 0.3;
+
+        // Connection line
+        ctx.beginPath();
+        ctx.moveTo(this.nodeA.x, this.nodeA.y);
+        ctx.lineTo(this.nodeB.x, this.nodeB.y);
+        ctx.strokeStyle = `rgba(20, 184, 166, ${opacity})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Data pulse traveling along connection
+        const pulseX = this.nodeA.x + dx * this.flowPosition;
+        const pulseY = this.nodeA.y + dy * this.flowPosition;
+
+        const pulseGradient = ctx.createRadialGradient(
+          pulseX, pulseY, 0,
+          pulseX, pulseY, 6
+        );
+        pulseGradient.addColorStop(0, `rgba(20, 184, 166, ${opacity * 2})`);
+        pulseGradient.addColorStop(1, 'rgba(20, 184, 166, 0)');
+
+        ctx.beginPath();
+        ctx.arc(pulseX, pulseY, 6, 0, Math.PI * 2);
+        ctx.fillStyle = pulseGradient;
+        ctx.fill();
+
+        return true;
+      }
+    }
+
+    // Initialize nodes
+    const nodes = [];
+    const connections = [];
+
+    function createNodes(count, centerX = width / 2, centerY = height / 2, spread = 300) {
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = Math.random() * spread;
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+        const layer = Math.floor(Math.random() * 5);
+        nodes.push(new Node(x, y, layer));
+      }
+    }
+
+    function createConnections() {
+      // Clear existing connections
+      connections.length = 0;
+
+      // Create connections between nearby nodes
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[j].x - nodes[i].x;
+          const dy = nodes[j].y - nodes[i].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          // Connect if close enough
+          if (dist < 200 && Math.random() < 0.3) {
+            const conn = new Connection(nodes[i], nodes[j]);
+            connections.push(conn);
+            nodes[i].connections.push(conn);
+            nodes[j].connections.push(conn);
+          }
+        }
+      }
+    }
+
+    // Initial setup
+    createNodes(150);
+    createConnections();
+
+    // Mouse events
+    document.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    document.addEventListener('click', (e) => {
+      // Spawn new cluster on click
+      const clusterSize = 5 + Math.floor(Math.random() * 10);
+      createNodes(clusterSize, e.clientX, e.clientY, 100);
+
+      // Recreate connections
+      setTimeout(createConnections, 100);
+    });
+
+    // Animation loop
+    let totalDataFlow = 0;
+    let lastTime = Date.now();
+
+    function animate() {
+      const now = Date.now();
+      const delta = now - lastTime;
+
+      // Clear canvas with fade effect
+      ctx.fillStyle = 'rgba(24, 27, 27, 0.15)';
+      ctx.fillRect(0, 0, width, height);
+
+      // Update and draw connections
+      let activeConnections = 0;
+      connections.forEach(conn => {
+        conn.update();
+        if (conn.draw()) {
+          activeConnections++;
+        }
+        totalDataFlow += conn.dataFlow;
+        conn.dataFlow = 0;
+      });
+
+      // Update and draw nodes
+      nodes.forEach(node => {
+        node.update();
+        node.draw();
+      });
+
+      // Update stats every 500ms
+      if (delta > 500) {
+        nodeCountEl.textContent = nodes.length;
+        connectionCountEl.textContent = activeConnections;
+        dataFlowEl.textContent = Math.round(totalDataFlow / (delta / 1000));
+        totalDataFlow = 0;
+        lastTime = now;
+      }
+
+      // Periodically refresh connections
+      if (Math.random() < 0.001) {
+        createConnections();
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    // Handle resize
+    window.addEventListener('resize', () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+    });
+  </script>
+</body>
+</html>

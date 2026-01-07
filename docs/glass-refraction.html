@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Glass Refraction</title>
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/style.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-mono/style.css" rel="stylesheet">
+  <style>
+    :root {
+      --realie-bg: #181b1b;
+      --realie-accent-glow: #14b8a6;
+      --realie-text: #ede9fe;
+      --realie-text-muted: #71717a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--realie-bg);
+      min-height: 100vh;
+      font-family: 'Geist', system-ui, sans-serif;
+      color: var(--realie-text);
+      overflow: hidden;
+      cursor: none;
+    }
+
+    .back-link {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      color: var(--realie-text-muted);
+      text-decoration: none;
+      z-index: 100;
+      padding: 8px 16px;
+      border: 1px solid rgba(237, 233, 254, 0.1);
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .back-link:hover {
+      color: var(--realie-accent-glow);
+      border-color: var(--realie-accent-glow);
+    }
+
+    .ui {
+      position: fixed;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .ui-top {
+      top: 30px;
+      left: 30px;
+    }
+
+    .ui-bottom {
+      bottom: 30px;
+      left: 30px;
+      right: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--realie-text-muted);
+      margin-bottom: 8px;
+    }
+
+    .title {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--realie-accent-glow);
+    }
+
+    .hint {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      color: var(--realie-text-muted);
+      text-align: right;
+      line-height: 1.6;
+    }
+
+    .depth-value {
+      font-family: 'Geist Mono', monospace;
+      font-size: 48px;
+      font-weight: 300;
+      color: var(--realie-text);
+      opacity: 0.3;
+    }
+
+    /* Background content to see through glass */
+    .background-content {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .background-text {
+      font-size: 20vw;
+      font-weight: 700;
+      color: rgba(237, 233, 254, 0.03);
+      letter-spacing: -0.05em;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    /* Floating shapes behind glass */
+    .shape {
+      position: fixed;
+      border-radius: 50%;
+      z-index: 2;
+    }
+
+    .shape-1 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(20, 184, 166, 0.4) 0%, transparent 70%);
+      top: 10%;
+      left: 15%;
+      animation: float1 8s ease-in-out infinite;
+    }
+
+    .shape-2 {
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
+      top: 50%;
+      right: 20%;
+      animation: float2 10s ease-in-out infinite;
+    }
+
+    .shape-3 {
+      width: 250px;
+      height: 250px;
+      background: radial-gradient(circle, rgba(251, 191, 36, 0.2) 0%, transparent 70%);
+      bottom: 15%;
+      left: 30%;
+      animation: float3 12s ease-in-out infinite;
+    }
+
+    .shape-4 {
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(248, 113, 113, 0.25) 0%, transparent 70%);
+      top: 30%;
+      right: 40%;
+      animation: float4 9s ease-in-out infinite;
+    }
+
+    @keyframes float1 {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(30px, -40px); }
+    }
+
+    @keyframes float2 {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(-40px, 30px); }
+    }
+
+    @keyframes float3 {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(20px, -30px); }
+    }
+
+    @keyframes float4 {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(-30px, -20px); }
+    }
+
+    /* Glass panel container */
+    .glass-container {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    /* Glass panel */
+    .glass-panel {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      pointer-events: auto;
+      cursor: grab;
+      transition: transform 0.1s ease-out;
+    }
+
+    .glass-panel:active {
+      cursor: grabbing;
+    }
+
+    .glass-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        transparent 50%,
+        rgba(0, 0, 0, 0.05) 100%
+      );
+      border-radius: 24px;
+      pointer-events: none;
+    }
+
+    /* Teal tinted edge */
+    .glass-panel::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      background: linear-gradient(
+        135deg,
+        rgba(20, 184, 166, 0.3) 0%,
+        transparent 30%,
+        transparent 70%,
+        rgba(20, 184, 166, 0.2) 100%
+      );
+      border-radius: 25px;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .glass-panel:hover::after {
+      opacity: 1;
+    }
+
+    .glass-panel-1 {
+      width: 350px;
+      height: 450px;
+      left: calc(50% - 400px);
+      top: calc(50% - 225px);
+    }
+
+    .glass-panel-2 {
+      width: 280px;
+      height: 350px;
+      left: calc(50% + 100px);
+      top: calc(50% - 175px);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+    }
+
+    .glass-panel-3 {
+      width: 200px;
+      height: 250px;
+      left: calc(50% - 100px);
+      top: calc(50% + 50px);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+    }
+
+    /* Glass panel content */
+    .glass-content {
+      padding: 30px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .glass-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(237, 233, 254, 0.5);
+      margin-bottom: 16px;
+    }
+
+    .glass-title {
+      font-size: 24px;
+      font-weight: 400;
+      color: var(--realie-text);
+      margin-bottom: 12px;
+    }
+
+    .glass-text {
+      font-size: 13px;
+      color: rgba(237, 233, 254, 0.6);
+      line-height: 1.6;
+    }
+
+    .glass-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(237, 233, 254, 0.1), transparent);
+      margin: 20px 0;
+    }
+
+    .glass-stat {
+      margin-top: auto;
+    }
+
+    .glass-stat-value {
+      font-family: 'Geist Mono', monospace;
+      font-size: 36px;
+      font-weight: 300;
+      color: var(--realie-text);
+    }
+
+    .glass-stat-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      color: rgba(237, 233, 254, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* Custom cursor */
+    .cursor {
+      position: fixed;
+      width: 20px;
+      height: 20px;
+      border: 1px solid var(--realie-accent-glow);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 1000;
+      transition: transform 0.15s ease-out, border-color 0.2s ease;
+    }
+
+    .cursor.dragging {
+      transform: scale(1.5);
+      border-color: var(--realie-text);
+    }
+
+    /* Grid lines for depth */
+    .grid-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0.3;
+    }
+
+    .grid-line {
+      position: absolute;
+      background: rgba(237, 233, 254, 0.02);
+    }
+
+    .grid-line.horizontal {
+      left: 0;
+      right: 0;
+      height: 1px;
+    }
+
+    .grid-line.vertical {
+      top: 0;
+      bottom: 0;
+      width: 1px;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">Back to Showcase</a>
+
+  <div class="ui ui-top">
+    <div class="label">ULTRAHARD 15</div>
+    <div class="title">Glass Refraction</div>
+  </div>
+
+  <div class="ui ui-bottom">
+    <div>
+      <div class="label">Depth Layer</div>
+      <div class="depth-value" id="depthValue">1</div>
+    </div>
+    <div class="hint">
+      Drag glass panels<br>
+      Layers create depth
+    </div>
+  </div>
+
+  <!-- Custom cursor -->
+  <div class="cursor" id="cursor"></div>
+
+  <!-- Background content -->
+  <div class="background-content">
+    <div class="background-text">GLASS</div>
+  </div>
+
+  <!-- Floating shapes -->
+  <div class="shape shape-1"></div>
+  <div class="shape shape-2"></div>
+  <div class="shape shape-3"></div>
+  <div class="shape shape-4"></div>
+
+  <!-- Grid overlay -->
+  <div class="grid-overlay" id="gridOverlay"></div>
+
+  <!-- Glass panels -->
+  <div class="glass-container">
+    <div class="glass-panel glass-panel-1" data-depth="1" id="panel1">
+      <div class="glass-content">
+        <div class="glass-label">Layer 01</div>
+        <h2 class="glass-title">Frosted Surface</h2>
+        <p class="glass-text">Light diffracts through layered materials, creating depth and dimension through transparency.</p>
+        <div class="glass-divider"></div>
+        <div class="glass-stat">
+          <div class="glass-stat-value">20px</div>
+          <div class="glass-stat-label">Blur Radius</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass-panel glass-panel-2" data-depth="2" id="panel2">
+      <div class="glass-content">
+        <div class="glass-label">Layer 02</div>
+        <h2 class="glass-title">Deep Blur</h2>
+        <p class="glass-text">Increased blur creates a sense of atmospheric depth.</p>
+        <div class="glass-divider"></div>
+        <div class="glass-stat">
+          <div class="glass-stat-value">30px</div>
+          <div class="glass-stat-label">Blur Radius</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass-panel glass-panel-3" data-depth="3" id="panel3">
+      <div class="glass-content">
+        <div class="glass-label">Layer 03</div>
+        <h2 class="glass-title">Dense</h2>
+        <div class="glass-divider"></div>
+        <div class="glass-stat">
+          <div class="glass-stat-value">40px</div>
+          <div class="glass-stat-label">Blur</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const cursor = document.getElementById('cursor');
+    const panels = document.querySelectorAll('.glass-panel');
+    const depthValue = document.getElementById('depthValue');
+    const gridOverlay = document.getElementById('gridOverlay');
+
+    // Create grid lines
+    for (let i = 1; i < 10; i++) {
+      const hLine = document.createElement('div');
+      hLine.className = 'grid-line horizontal';
+      hLine.style.top = (i * 10) + '%';
+      gridOverlay.appendChild(hLine);
+
+      const vLine = document.createElement('div');
+      vLine.className = 'grid-line vertical';
+      vLine.style.left = (i * 10) + '%';
+      gridOverlay.appendChild(vLine);
+    }
+
+    let mouseX = 0, mouseY = 0;
+    let cursorX = 0, cursorY = 0;
+    let activePanel = null;
+    let offsetX = 0, offsetY = 0;
+    let currentDepth = 1;
+
+    // Cursor movement
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+
+      if (activePanel) {
+        const x = e.clientX - offsetX;
+        const y = e.clientY - offsetY;
+        activePanel.style.left = x + 'px';
+        activePanel.style.top = y + 'px';
+      }
+    });
+
+    // Smooth cursor animation
+    function animateCursor() {
+      cursorX += (mouseX - cursorX) * 0.15;
+      cursorY += (mouseY - cursorY) * 0.15;
+      cursor.style.left = cursorX - 10 + 'px';
+      cursor.style.top = cursorY - 10 + 'px';
+      requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+
+    // Panel interactions
+    panels.forEach(panel => {
+      panel.addEventListener('mousedown', (e) => {
+        activePanel = panel;
+        cursor.classList.add('dragging');
+
+        const rect = panel.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+
+        // Bring to front
+        panels.forEach(p => p.style.zIndex = '5');
+        panel.style.zIndex = '10';
+
+        // Update depth display
+        currentDepth = parseInt(panel.dataset.depth);
+        depthValue.textContent = currentDepth;
+      });
+
+      panel.addEventListener('mouseenter', () => {
+        currentDepth = parseInt(panel.dataset.depth);
+        depthValue.textContent = currentDepth;
+      });
+    });
+
+    document.addEventListener('mouseup', () => {
+      activePanel = null;
+      cursor.classList.remove('dragging');
+    });
+
+    // Parallax on mouse move
+    document.addEventListener('mousemove', (e) => {
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      const moveX = (e.clientX - centerX) / centerX;
+      const moveY = (e.clientY - centerY) / centerY;
+
+      // Move shapes with parallax
+      document.querySelectorAll('.shape').forEach((shape, i) => {
+        const depth = (i + 1) * 0.5;
+        const x = moveX * 20 * depth;
+        const y = moveY * 20 * depth;
+        shape.style.transform = `translate(${x}px, ${y}px)`;
+      });
+
+      // Subtle grid parallax
+      gridOverlay.style.transform = `translate(${moveX * 5}px, ${moveY * 5}px)`;
+    });
+  </script>
+</body>
+</html>
