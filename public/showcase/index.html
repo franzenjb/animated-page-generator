@@ -746,10 +746,11 @@
       }
     });
 
-    // Animate cards on load
-    gsap.from('.showcase-card', {
-      opacity: 0,
-      y: 30,
+    // Animate cards on load - use set + to for reliable visibility
+    gsap.set('.showcase-card', { opacity: 0, y: 30 });
+    gsap.to('.showcase-card', {
+      opacity: 1,
+      y: 0,
       duration: 0.6,
       stagger: 0.05,
       ease: 'power2.out',
