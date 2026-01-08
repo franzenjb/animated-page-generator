@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CAP Data Experiments</title>
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/style.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <style>
+    :root {
+      --bg: #181b1b;
+      --bg-elevated: #1e2222;
+      --accent: #c41e3a;
+      --accent-light: #e63946;
+      --text: #f1faee;
+      --text-muted: #a8dadc;
+      --border: rgba(241, 250, 238, 0.08);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      font-family: 'Geist', system-ui, sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      padding: 24px 40px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      color: white;
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .logo-text span {
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    /* Main */
+    .main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 60px 40px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      background: rgba(196, 30, 58, 0.15);
+      border: 1px solid rgba(196, 30, 58, 0.3);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent-light);
+      margin-bottom: 20px;
+      letter-spacing: 0.05em;
+    }
+
+    .hero-title {
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 600;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+
+    .hero-title span {
+      color: var(--accent-light);
+    }
+
+    .hero-desc {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      text-decoration: none;
+      color: var(--text);
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px -20px rgba(196, 30, 58, 0.3);
+    }
+
+    /* Card Thumbnail */
+    .card-thumb {
+      height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-thumb::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0.1;
+    }
+
+    .card-thumb.chart-bar { background: linear-gradient(135deg, #1d3557, #457b9d); }
+    .card-thumb.chart-sankey { background: linear-gradient(135deg, #2a9d8f, #264653); }
+    .card-thumb.chart-line { background: linear-gradient(135deg, #e9c46a, #f4a261); }
+    .card-thumb.chart-pie { background: linear-gradient(135deg, #e76f51, #f4a261); }
+    .card-thumb.chart-treemap { background: linear-gradient(135deg, #6a4c93, #1982c4); }
+    .card-thumb.chart-network { background: linear-gradient(135deg, #8338ec, #3a86ff); }
+    .card-thumb.chart-funnel { background: linear-gradient(135deg, #ff006e, #fb5607); }
+    .card-thumb.chart-bubble { background: linear-gradient(135deg, #06d6a0, #118ab2); }
+    .card-thumb.chart-dashboard { background: linear-gradient(135deg, #c41e3a, #1e3a5f); }
+    .card-thumb.chart-waterfall { background: linear-gradient(135deg, #003049, #669bbc); }
+
+    .card-icon {
+      font-size: 48px;
+      opacity: 0.8;
+    }
+
+    /* Card Content */
+    .card-content {
+      padding: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .card-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      flex: 1;
+    }
+
+    .card-tag {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 4px 10px;
+      background: rgba(196, 30, 58, 0.1);
+      border-radius: 4px;
+      font-size: 11px;
+      color: var(--accent-light);
+      font-weight: 500;
+      width: fit-content;
+    }
+
+    /* Section Labels */
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 48px 0 24px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    @media (max-width: 768px) {
+      .header { padding: 16px 20px; }
+      .main { padding: 40px 20px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">+</div>
+      <div class="logo-text">CAP <span>Experiments</span></div>
+    </div>
+    <a href="index.html" class="back-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      Back to Showcase
+    </a>
+  </header>
+
+  <main class="main">
+    <div class="hero">
+      <div class="hero-badge">RED CROSS DATA VIZ</div>
+      <h1 class="hero-title">CAP Data <span>Experiments</span></h1>
+      <p class="hero-desc">Interactive Plotly visualizations exploring Community Action Partners data, impact metrics, and operational insights.</p>
+    </div>
+
+    <div class="section-label">Dashboards & Executive Views</div>
+    <div class="grid">
+      <a href="experiments/exec_dashboard_1.html" class="card">
+        <div class="card-thumb chart-dashboard">
+          <span class="card-icon">📊</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">Executive Dashboard</h3>
+          <p class="card-desc">High-level KPIs and metrics for executive stakeholders.</p>
+          <span class="card-tag">Dashboard</span>
+        </div>
+      </a>
+
+      <a href="experiments/exec_dashboard_2.html" class="card">
+        <div class="card-thumb chart-dashboard">
+          <span class="card-icon">📈</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">Executive Dashboard v2</h3>
+          <p class="card-desc">Enhanced executive view with additional metrics.</p>
+          <span class="card-tag">Dashboard</span>
+        </div>
+      </a>
+
+      <a href="experiments/quarterly_trends.html" class="card">
+        <div class="card-thumb chart-line">
+          <span class="card-icon">📅</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">Quarterly Trends</h3>
+          <p class="card-desc">Quarter-over-quarter performance and trend analysis.</p>
+          <span class="card-tag">Trends</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="section-label">Impact & ROI Analysis</div>
+    <div class="grid">
+      <a href="experiments/homes_safer.html" class="card">
+        <div class="card-thumb chart-bar">
+          <span class="card-icon">🏠</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">Homes Made Safer</h3>
+          <p class="card-desc">Tracking homes made safer through smoke alarm installations and fire safety education.</p>
+          <span class="card-tag">Impact</span>
+        </div>
+      </a>
+
+      <a href="experiments/roi_partner_type.html" class="card">
+        <div class="card-thumb chart-bar">
+          <span class="card-icon">🤝</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">ROI by Partner Type</h3>
+          <p class="card-desc">Return on investment analysis segmented by partner categories.</p>
+          <span class="card-tag">ROI</span>
+        </div>
+      </a>
+
+      <a href="experiments/roi_disaster_type.html" class="card">
+        <div class="card-thumb chart-bar">
+          <span class="card-icon">🌀</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">ROI by Disaster Type</h3>
+          <p class="card-desc">Investment returns across different disaster response categories.</p>
+          <span class="card-tag">ROI</span>
+        </div>
+      </a>
+
+      <a href="experiments/roi_partner_waterfall.html" class="card">
+        <div class="card-thumb chart-waterfall">
+          <span class="card-icon">💹</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">Partner ROI Waterfall</h3>
+          <p class="card-desc">Waterfall chart showing cumulative partner contributions.</p>
+          <span class="card-tag">ROI</span>
+        </div>
+      </a>
+
+      <a href="experiments/treemap_impact.html" class="card">
+        <div class="card-thumb chart-treemap">
+          <span class="card-icon">🗂️</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">Impact Treemap</h3>
+          <p class="card-desc">Hierarchical visualization of impact across categories.</p>
+          <span class="card-tag">Impact</span>
+        </div>
+      </a>
+
+      <a href="experiments/bubble_map_impact.html" class="card">
+        <div class="card-thumb chart-bubble">
+          <span class="card-icon">🗺️</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">Bubble Map Impact</h3>
+          <p class="card-desc">Geographic bubble visualization of regional impact.</p>
+          <span class="card-tag">Geographic</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="section-label">Operations & Resources</div>
+    <div class="grid">
+      <a href="experiments/sankey_resource_flow.html" class="card">
+        <div class="card-thumb chart-sankey">
+          <span class="card-icon">🔀</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">Resource Flow Sankey</h3>
+          <p class="card-desc">Flow diagram showing resource allocation and distribution.</p>
+          <span class="card-tag">Flow</span>
+        </div>
+      </a>
+
+      <a href="experiments/response_timeline.html" class="card">
+        <div class="card-thumb chart-line">
+          <span class="card-icon">⏱️</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">Response Timeline</h3>
+          <p class="card-desc">Timeline visualization of disaster response activities.</p>
+          <span class="card-tag">Timeline</span>
+        </div>
+      </a>
+
+      <a href="experiments/speed_advantage.html" class="card">
+        <div class="card-thumb chart-bar">
+          <span class="card-icon">⚡</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">Speed Advantage</h3>
+          <p class="card-desc">Comparison of response speed metrics.</p>
+          <span class="card-tag">Performance</span>
+        </div>
+      </a>
+
+      <a href="experiments/asset_utilization.html" class="card">
+        <div class="card-thumb chart-bar">
+          <span class="card-icon">📦</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">Asset Utilization</h3>
+          <p class="card-desc">Tracking utilization rates of organizational assets.</p>
+          <span class="card-tag">Operations</span>
+        </div>
+      </a>
+
+      <a href="experiments/meal_cost_comparison.html" class="card">
+        <div class="card-thumb chart-bar">
+          <span class="card-icon">🍽️</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">Meal Cost Comparison</h3>
+          <p class="card-desc">Cost analysis of meal distribution programs.</p>
+          <span class="card-tag">Cost</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="section-label">Stakeholders & Partners</div>
+    <div class="grid">
+      <a href="experiments/stakeholder_sentiment.html" class="card">
+        <div class="card-thumb chart-pie">
+          <span class="card-icon">😊</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">Stakeholder Sentiment</h3>
+          <p class="card-desc">Analysis of stakeholder feedback and sentiment scores.</p>
+          <span class="card-tag">Sentiment</span>
+        </div>
+      </a>
+
+      <a href="experiments/network_partners.html" class="card">
+        <div class="card-thumb chart-network">
+          <span class="card-icon">🕸️</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">Partner Network</h3>
+          <p class="card-desc">Network graph of partner relationships and connections.</p>
+          <span class="card-tag">Network</span>
+        </div>
+      </a>
+
+      <a href="experiments/funnel_pipeline.html" class="card">
+        <div class="card-thumb chart-funnel">
+          <span class="card-icon">🔻</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">Partnership Pipeline</h3>
+          <p class="card-desc">Funnel visualization of partner acquisition stages.</p>
+          <span class="card-tag">Pipeline</span>
+        </div>
+      </a>
+
+      <a href="experiments/volunteer_trend.html" class="card">
+        <div class="card-thumb chart-line">
+          <span class="card-icon">🙋</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">Volunteer Trends</h3>
+          <p class="card-desc">Tracking volunteer engagement over time.</p>
+          <span class="card-tag">Volunteers</span>
+        </div>
+      </a>
+
+      <a href="experiments/youth_preparedness.html" class="card">
+        <div class="card-thumb chart-bar">
+          <span class="card-icon">👦</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">Youth Preparedness</h3>
+          <p class="card-desc">Metrics on youth education and preparedness programs.</p>
+          <span class="card-tag">Education</span>
+        </div>
+      </a>
+
+      <a href="experiments/dual_axis_analysis.html" class="card">
+        <div class="card-thumb chart-line">
+          <span class="card-icon">📉</span>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">Dual Axis Analysis</h3>
+          <p class="card-desc">Multi-metric comparison with dual Y-axis visualization.</p>
+          <span class="card-tag">Analysis</span>
+        </div>
+      </a>
+    </div>
+  </main>
+
+  <script>
+    // Animate cards on load
+    gsap.from('.card', {
+      opacity: 0,
+      y: 30,
+      duration: 0.5,
+      stagger: 0.05,
+      ease: 'power2.out',
+      delay: 0.2
+    });
+
+    gsap.from('.hero > *', {
+      opacity: 0,
+      y: 20,
+      duration: 0.6,
+      stagger: 0.1,
+      ease: 'power2.out'
+    });
+  </script>
+</body>
+</html>
