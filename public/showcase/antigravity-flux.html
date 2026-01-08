@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ANTIGRAVITY: FLUX</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #050510;
+            --accent-1: #00f2ff;
+            --accent-2: #ff0055;
+            --accent-3: #ccff00;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            overflow: hidden;
+            /* We handle scrolling virtually */
+            font-family: 'Outfit', sans-serif;
+            color: white;
+            cursor: none;
+        }
+
+        #canvas-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        #art-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            /* Enable 3D CSS */
+            perspective: 1000px;
+            overflow: hidden;
+        }
+
+        svg#main-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            /* The goo filter creates the liquid effect */
+            filter: url('#goo');
+        }
+
+        .ui-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 20;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            mix-blend-mode: exclusion;
+        }
+
+        h1 {
+            font-size: 8vw;
+            margin: 0;
+            font-weight: 900;
+            letter-spacing: -0.05em;
+            text-transform: uppercase;
+            background: linear-gradient(to right, #fff, #aaa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            opacity: 0;
+            /* Hidden initially */
+            transform: translateY(50px);
+        }
+
+        .status {
+            margin-top: 1rem;
+            font-family: monospace;
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        #custom-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: difference;
+            backdrop-filter: invert(1);
+            transition: transform 0.1s;
+        }
+
+        #custom-cursor::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #custom-cursor.active {
+            transform: translate(-50%, -50%) scale(0.5);
+            background: white;
+        }
+
+        .back-link {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #71717a;
+            text-decoration: none;
+            z-index: 9999;
+            padding: 8px 16px;
+            background: rgba(5, 5, 16, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+        .back-link:hover {
+            color: #00f2ff;
+            border-color: #00f2ff;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="index.html" class="back-link">Back to Showcase</a>
+
+    <!-- Background Flow Field -->
+    <canvas id="canvas-bg"></canvas>
+
+    <!-- Main SVG Liquid Layer -->
+    <div id="art-container">
+        <svg id="main-canvas" preserveAspectRatio="xMidYMid slice">
+            <defs>
+                <!-- Complex Gradients -->
+                <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#00f2ff" />
+                    <stop offset="100%" stop-color="#0051ff" />
+                </linearGradient>
+                <linearGradient id="grad2" x1="100%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#ff0055" />
+                    <stop offset="100%" stop-color="#ff7b00" />
+                </linearGradient>
+                <radialGradient id="grad3" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8" />
+                    <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+                </radialGradient>
+
+                <!-- The "Gooey" Filter -->
+                <filter id="goo">
+                    <!-- Blur the input -->
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur" />
+                    <!-- Threshold alpha to sharpen edges again -->
+                    <feColorMatrix in="blur" mode="matrix" values="
+                        1 0 0 0 0
+                        0 1 0 0 0
+                        0 0 1 0 0
+                        0 0 0 25 -9" result="goo" />
+                    <!-- Composite original on top (optional, can create inner details) -->
+                    <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+                </filter>
+
+                <!-- Glow Filter -->
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+                    <feMerge>
+                        <feMergeNode in="coloredBlur" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+            </defs>
+            <!-- Groups for depth sorting -->
+            <g id="layer-back"></g>
+            <g id="layer-mid"></g>
+            <g id="layer-front"></g>
+        </svg>
+    </div>
+
+    <!-- UI -->
+    <div class="ui-layer">
+        <h1 id="main-title">ANTIGRAVITY</h1>
+        <div class="status">SYSTEM: FLUID DYNAMICS // MODE: CHAOS</div>
+        <div id="controls" style="margin-top: 2rem; display: flex; gap: 1rem; opacity: 0; pointer-events: auto;">
+            <button id="btn-save" class="control-btn">SAVE ART</button>
+            <button id="btn-gen" class="control-btn">GENERATE FLUX</button>
+        </div>
+    </div>
+
+    <div id="custom-cursor"></div>
+
+    <style>
+        .control-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            cursor: none;
+            /* We use custom cursor */
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            text-transform: uppercase;
+        }
+
+        .control-btn:hover {
+            background: white;
+            color: black;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+        }
+    </style>
+
+    <script>
+        // --- SYSTEM CONFIG ---
+        let CONFIG = {
+            particleCount: 80,
+            attractorCount: 3,
+            connectionDist: 150,
+            mouseForce: 2000,
+            colors: ['url(#grad1)', 'url(#grad2)', '#ccff00', '#ffffff'],
+            noiseZoom: 0.003,
+            speed: 1
+        };
+
+        // --- STATE MANAGERS ---
+        const state = {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            mouseX: window.innerWidth / 2,
+            mouseY: window.innerHeight / 2,
+            isMouseDown: false,
+            particles: [],
+            attractors: [],
+            time: 0
+        };
+
+        // --- CANVAS BACKGROUND (Flow Field) ---
+        const canvas = document.getElementById('canvas-bg');
+        const ctx = canvas.getContext('2d');
+
+        function resize() {
+            state.width = window.innerWidth;
+            state.height = window.innerHeight;
+            canvas.width = state.width;
+            canvas.height = state.height;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Flow field noise (very simple pseudo-noise for speed)
+        function noise(x, y, z) {
+            // Simple sin/cos combinations to simulate Perlin-ish noise
+            return Math.sin(x * 0.005 + z) * Math.cos(y * 0.005 + z);
+        }
+
+        // --- PHYSICS ENTITIES ---
+
+        class Particle {
+            constructor(layer) {
+                this.x = Math.random() * state.width;
+                this.y = Math.random() * state.height;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.radius = 15 + Math.random() * 30; // Large radius for goo effect
+                this.friction = 0.96;
+                this.mass = this.radius;
+
+                this.el = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                this.el.setAttribute("r", this.radius);
+
+                // Randomly assign style
+                if (Math.random() > 0.7) {
+                    this.el.setAttribute("fill", "url(#grad1)");
+                } else if (Math.random() > 0.4) {
+                    this.el.setAttribute("fill", "url(#grad2)");
+                } else {
+                    this.el.setAttribute("fill", "#fff");
+                    this.el.setAttribute("fill-opacity", "0.2");
+                }
+
+                layer.appendChild(this.el);
+            }
+
+            update() {
+                // 1. Environmental Forces (Flow Field)
+                const flowX = Math.cos(state.time + this.y * 0.002) * 0.5;
+                const flowY = Math.sin(state.time + this.x * 0.002) * 0.5;
+                this.vx += flowX * 0.2;
+                this.vy += flowY * 0.2;
+
+                // 2. Mouse Interaction (Repel or Attract)
+                const dx = this.x - state.mouseX;
+                const dy = this.y - state.mouseY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const minDist = 250;
+
+                if (dist < minDist) {
+                    const force = (minDist - dist) / minDist;
+                    if (state.isMouseDown) {
+                        // Attract
+                        this.vx -= (dx / dist) * force * 2;
+                        this.vy -= (dy / dist) * force * 2;
+                    } else {
+                        // Repel
+                        this.vx += (dx / dist) * force * 0.8;
+                        this.vy += (dy / dist) * force * 0.8;
+                    }
+                }
+
+                // 3. Keep in bounds (Wrap)
+                const pad = 50;
+                if (this.x < -pad) this.x = state.width + pad;
+                if (this.x > state.width + pad) this.x = -pad;
+                if (this.y < -pad) this.y = state.height + pad;
+                if (this.y > state.height + pad) this.y = -pad;
+
+                // 4. Integration
+                this.vx *= this.friction;
+                this.vy *= this.friction;
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // 5. Render
+                this.el.setAttribute("cx", this.x);
+                this.el.setAttribute("cy", this.y);
+            }
+        }
+
+        // --- INITIALIZATION ---
+        const layerMid = document.getElementById('layer-mid');
+
+        // Spawn Particles
+        for (let i = 0; i < CONFIG.particleCount; i++) {
+            state.particles.push(new Particle(layerMid));
+        }
+
+        // Title & UI Animation
+        const tl = gsap.timeline();
+        tl.to("#main-title", {
+            opacity: 1,
+            y: 0,
+            duration: 2,
+            ease: "power4.out",
+            delay: 0.5
+        });
+        tl.to("#controls", {
+            opacity: 1,
+            y: 0,
+            duration: 1,
+            ease: "power2.out"
+        }, "-=1.5");
+
+        // --- BUTTON LOGIC ---
+        document.getElementById('btn-gen').addEventListener('click', () => {
+            // 1. Reset Configuration with Chaos
+            CONFIG.noiseZoom = 0.001 + Math.random() * 0.01;
+            CONFIG.speed = 0.5 + Math.random() * 1.5;
+
+            // Randomize Gradients
+            const randomHex = () => '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+            document.querySelector('#grad1 stop:nth-child(1)').setAttribute('stop-color', randomHex());
+            document.querySelector('#grad1 stop:nth-child(2)').setAttribute('stop-color', randomHex());
+            document.querySelector('#grad2 stop:nth-child(1)').setAttribute('stop-color', randomHex());
+            document.querySelector('#grad2 stop:nth-child(2)').setAttribute('stop-color', randomHex());
+
+            // 2. Clear & Respawn Particles
+            state.particles.forEach(p => {
+                if (p.el.parentNode) p.el.parentNode.removeChild(p.el);
+            });
+            state.particles = [];
+
+            // New distribution logic
+            const newCount = 50 + Math.floor(Math.random() * 100);
+            for (let i = 0; i < newCount; i++) {
+                state.particles.push(new Particle(layerMid));
+            }
+
+            // Flash Effect
+            gsap.fromTo("#art-container", { opacity: 0, scale: 0.95 }, { opacity: 1, scale: 1, duration: 0.8, ease: "elastic.out(1, 0.5)" });
+        });
+
+        document.getElementById('btn-save').addEventListener('click', () => {
+            // Composite SVG + Canvas for download
+            const svg = document.getElementById('main-canvas');
+            const serializer = new XMLSerializer();
+            let svgStr = serializer.serializeToString(svg);
+
+            // Canvas logic
+            const composite = document.createElement('canvas');
+            composite.width = state.width;
+            composite.height = state.height;
+            const cCtx = composite.getContext('2d');
+
+            // 1. Fill Background
+            cCtx.fillStyle = '#050510';
+            cCtx.fillRect(0, 0, state.width, state.height);
+
+            // 2. Draw Flow Field
+            cCtx.drawImage(canvas, 0, 0);
+
+            // 3. Draw SVG
+            const img = new Image();
+            const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+
+            img.onload = function () {
+                cCtx.drawImage(img, 0, 0);
+
+                // Download
+                const link = document.createElement('a');
+                link.download = 'flux-art-' + Date.now() + '.png';
+                link.href = composite.toDataURL('image/png');
+                link.click();
+
+                URL.revokeObjectURL(url);
+            };
+            img.src = url;
+
+            // Feedback
+            const btn = document.getElementById('btn-save');
+            const oldText = btn.innerText;
+            btn.innerText = "SAVING...";
+            setTimeout(() => btn.innerText = oldText, 2000);
+        });
+
+        // --- INTERACTION ---
+        window.addEventListener('mousemove', e => {
+            state.mouseX = e.clientX;
+            state.mouseY = e.clientY;
+
+            gsap.to("#custom-cursor", {
+                x: e.clientX,
+                y: e.clientY,
+                duration: 0.1,
+                ease: "power2.out"
+            });
+        });
+
+        window.addEventListener('mousedown', () => {
+            state.isMouseDown = true;
+            document.getElementById('custom-cursor').classList.add('active');
+            gsap.to(".ui-layer", { scale: 0.95, duration: 0.3 });
+        });
+
+        window.addEventListener('mouseup', () => {
+            state.isMouseDown = false;
+            document.getElementById('custom-cursor').classList.remove('active');
+            gsap.to(".ui-layer", { scale: 1, duration: 0.3 });
+        });
+
+        // --- MAIN LOOP ---
+        function animate() {
+            state.time += 0.005;
+
+            // 1. Update Canvas Background (Flow Field Visualization)
+            // We'll clear with opacity to create trails
+            ctx.fillStyle = 'rgba(5, 5, 16, 0.2)';
+            ctx.fillRect(0, 0, state.width, state.height);
+
+            ctx.strokeStyle = 'rgba(100, 200, 255, 0.15)';
+            ctx.lineWidth = 1;
+
+            const step = 50; // Grid resolution
+            const t = state.time;
+
+            ctx.beginPath();
+            for (let x = 0; x <= state.width; x += step) {
+                for (let y = 0; y <= state.height; y += step) {
+                    // Complex noise function
+                    const angle = (Math.cos(x * 0.003 + t) + Math.sin(y * 0.003 + t)) * Math.PI;
+
+                    const len = 20;
+                    const x2 = x + Math.cos(angle) * len;
+                    const y2 = y + Math.sin(angle) * len;
+
+                    // Draw a little dot at the start
+                    // ctx.moveTo(x + 2, y); 
+                    // ctx.arc(x, y, 1, 0, Math.PI*2);
+
+                    // Draw vector line
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x2, y2);
+                }
+            }
+            ctx.stroke();
+
+            // 2. Update Particles
+            state.particles.forEach(p => p.update());
+
+            // 3. 3D Tilt Effect
+            const mx = (state.mouseX / state.width) - 0.5;
+            const my = (state.mouseY / state.height) - 0.5;
+
+            gsap.set("#art-container", {
+                rotationY: mx * 15, // Increase tilt
+                rotationX: -my * 15,
+                transformPerspective: 1200,
+                transformOrigin: "center center"
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+    </script>
+</body>
+
+</html>

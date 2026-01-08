@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cosmic Clock</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Helvetica:wght@300;400;700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Helvetica', sans-serif;
+      background: #000;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .cosmic-clock {
+      position: relative;
+      width: 90vmin;
+      height: 90vmin;
+      border-radius: 50%;
+    }
+    
+    .black-hole {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 120px;
+      height: 120px;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle at center, #000 0%, #E63946 40%, #000 80%);
+      border-radius: 50%;
+      overflow: hidden;
+    }
+    
+    .black-hole::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: conic-gradient(from 0deg, transparent 0%, #E63946 25%, #F1FAEE 50%, #E63946 75%, transparent 100%);
+      border-radius: 50%;
+      animation: spin 4s linear infinite;
+    }
+    
+    .black-hole::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 80px;
+      height: 80px;
+      background: #000;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+    }
+    
+    .orbit {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      border: 1px solid rgba(241, 250, 238, 0.1);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+    
+    .orbit-1 { width: 300px; height: 300px; }
+    .orbit-2 { width: 400px; height: 400px; }
+    .orbit-3 { width: 500px; height: 500px; }
+    
+    .planet {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #F1FAEE;
+      box-shadow: 0 0 20px #E63946;
+    }
+    
+    .planet-1 { background: #E63946; }
+    .planet-2 { background: #F1FAEE; }
+    .planet-3 { background: #E63946; }
+    .planet-4 { background: #F1FAEE; }
+    .planet-5 { background: #E63946; }
+    .planet-6 { background: #F1FAEE; }
+    .planet-7 { background: #E63946; }
+    .planet-8 { background: #F1FAEE; }
+    .planet-9 { background: #E63946; }
+    .planet-10 { background: #F1FAEE; }
+    .planet-11 { background: #E63946; }
+    .planet-12 { background: #F1FAEE; }
+    
+    .number {
+      position: absolute;
+      font-size: 48px;
+      font-weight: 700;
+      color: #F1FAEE;
+      text-shadow: 0 0 10px #E63946;
+      pointer-events: none;
+      transform-style: preserve-3d;
+    }
+    
+    .floating-shapes {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    
+    .shape {
+      position: absolute;
+      background: #E63946;
+      opacity: 0.3;
+    }
+    
+    .shape-1 {
+      width: 60px;
+      height: 60px;
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    }
+    
+    .shape-2 {
+      width: 80px;
+      height: 40px;
+      border-radius: 50px;
+    }
+    
+    .shape-3 {
+      width: 40px;
+      height: 80px;
+      clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+    }
+    
+    .hands {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    
+    .hand {
+      position: absolute;
+      background: #F1FAEE;
+      transform-origin: bottom center;
+      border-radius: 10px;
+    }
+    
+    .hour-hand {
+      width: 6px;
+      height: 80px;
+      top: -80px;
+      left: -3px;
+    }
+    
+    .minute-hand {
+      width: 4px;
+      height: 120px;
+      top: -120px;
+      left: -2px;
+    }
+    
+    .second-hand {
+      width: 2px;
+      height: 140px;
+      top: -140px;
+      left: -1px;
+      background: #E63946;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1) translateZ(0); }
+      50% { transform: scale(1.3) translateZ(20px); }
+    }
+
+    .back-link {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      font-family: monospace;
+      font-size: 11px;
+      color: #71717a;
+      text-decoration: none;
+      z-index: 100;
+      padding: 8px 16px;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(237, 233, 254, 0.1);
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+    .back-link:hover {
+      color: #E63946;
+      border-color: #E63946;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">Back to Showcase</a>
+  <div class="cosmic-clock">
+    <div class="black-hole"></div>
+    
+    <div class="orbit orbit-1"></div>
+    <div class="orbit orbit-2"></div>
+    <div class="orbit orbit-3"></div>
+    
+    <div class="planet planet-1" data-hour="12"></div>
+    <div class="planet planet-2" data-hour="1"></div>
+    <div class="planet planet-3" data-hour="2"></div>
+    <div class="planet planet-4" data-hour="3"></div>
+    <div class="planet planet-5" data-hour="4"></div>
+    <div class="planet planet-6" data-hour="5"></div>
+    <div class="planet planet-7" data-hour="6"></div>
+    <div class="planet planet-8" data-hour="7"></div>
+    <div class="planet planet-9" data-hour="8"></div>
+    <div class="planet planet-10" data-hour="9"></div>
+    <div class="planet planet-11" data-hour="10"></div>
+    <div class="planet planet-12" data-hour="11"></div>
+    
+    <div class="number" id="num-12">12</div>
+    <div class="number" id="num-1">1</div>
+    <div class="number" id="num-2">2</div>
+    <div class="number" id="num-3">3</div>
+    <div class="number" id="num-4">4</div>
+    <div class="number" id="num-5">5</div>
+    <div class="number" id="num-6">6</div>
+    <div class="number" id="num-7">7</div>
+    <div class="number" id="num-8">8</div>
+    <div class="number" id="num-9">9</div>
+    <div class="number" id="num-10">10</div>
+    <div class="number" id="num-11">11</div>
+    
+    <div class="hands">
+      <div class="hand hour-hand"></div>
+      <div class="hand minute-hand"></div>
+      <div class="hand second-hand"></div>
+    </div>
+    
+    <div class="floating-shapes">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+    </div>
+  </div>
+
+  <script>
+    // Position planets around the clock
+    const planets = document.querySelectorAll('.planet');
+    const numbers = document.querySelectorAll('.number');
+    const radius = 200;
+    
+    planets.forEach((planet, index) => {
+      const angle = (index * 30 - 90) * (Math.PI / 180);
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
+      
+      gsap.set(planet, {
+        left: '50%',
+        top: '50%',
+        x: x - 10,
+        y: y - 10,
+      });
+      
+      // Planet pulsing animation
+      gsap.to(planet, {
+        scale: 1.5,
+        duration: 2,
+        ease: "power2.inOut",
+        yoyo: true,
+        repeat: -1,
+        delay: index * 0.2
+      });
+      
+      // Orbital motion
+      gsap.to(planet, {
+        rotation: 360,
+        duration: 60,
+        ease: "none",
+        repeat: -1,
+        transformOrigin: `${-x}px ${-y}px`
+      });
+    });
+    
+    // Position and animate numbers in 3D space
+    numbers.forEach((number, index) => {
+      const angle = (index * 30 - 90) * (Math.PI / 180);
+      const x = Math.cos(angle) * 280;
+      const y = Math.sin(angle) * 280;
+      
+      gsap.set(number, {
+        left: '50%',
+        top: '50%',
+        x: x - 24,
+        y: y - 24,
+        z: Math.random() * 100,
+        rotationX: Math.random() * 360,
+        rotationY: Math.random() * 360,
+      });
+      
+      // 3D rotation animation
+      gsap.to(number, {
+        rotationX: "+=360",
+        rotationY: "+=360",
+        z: "+=50",
+        duration: 8 + index,
+        ease: "none",
+        repeat: -1,
+        yoyo: true
+      });
+      
+      // Floating motion
+      gsap.to(number, {
+        y: "+=20",
+        duration: 3 + index * 0.3,
+        ease: "power2.inOut",
+        yoyo: true,
+        repeat: -1
+      });
+    });
+    
+    // Animate floating shapes
+    const shapes = document.querySelectorAll('.shape');
+    shapes.forEach((shape, index) => {
+      gsap.set(shape, {
+        left: Math.random() * 100 + '%',
+        top: Math.random() * 100 + '%',
+        rotation: Math.random() * 360,
+        scale: 0.5 + Math.random() * 0.5
+      });
+      
+      gsap.to(shape, {
+        x: (Math.random() - 0.5) * 200,
+        y: (Math.random() - 0.5) * 200,
+        rotation: "+=360",
+        duration: 10 + index * 2,
+        ease: "none",
+        repeat: -1,
+        yoyo: true
+      });
+      
+      gsap.to(shape, {
+        scale: 1.5,
+        duration: 4,
+        ease: "power2.inOut",
+        yoyo: true,
+        repeat: -1,
+        delay: index * 0.5
+      });
+    });
+    
+    // Real time clock hands
+    function updateClock() {
+      const now = new Date();
+      const hours = now.getHours() % 12;
+      const minutes = now.getMinutes();
+      const seconds = now.getSeconds();
+      
+      const hourAngle = (hours * 30) + (minutes * 0.5);
+      const minuteAngle = minutes * 6;
+      const secondAngle = seconds * 6;
+      
+      gsap.set('.hour-hand', { rotation: hourAngle });
+      gsap.set('.minute-hand', { rotation: minuteAngle });
+      gsap.to('.second-hand', { 
+        rotation: secondAngle,
+        duration: 0.1,
+        ease: "power2.out"
+      });
+    }
+    
+    // Update clock every second
+    setInterval(updateClock, 1000);
+    updateClock();
+    
+    // Camera-like 3D perspective
+    gsap.set('.cosmic-clock', {
+      perspective: 1000,
+      transformStyle: 'preserve-3d'
+    });
+    
+    // Subtle 3D tilt animation
+    gsap.to('.cosmic-clock', {
+      rotationX: 5,
+      rotationY: 10,
+      duration: 20,
+      ease: "power2.inOut",
+      yoyo: true,
+      repeat: -1
+    });
+  </script>
+</body>
+</html>
